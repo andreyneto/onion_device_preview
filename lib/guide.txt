@@ -1,0 +1,144 @@
+------------------------------------------
+Game Switcher
+01 bg-title
+02 tips-bar-bg
+03 icon-A-54
+04 icon-B-54
+05 gs-bottom-bar
+06 gs-legend
+07 gs-top-bar
+08 lum0 - lum10 (starts under bg-title/gs-top-bar)
+09 power
+
+* If gs-bottom-bar exists, icon-A-54, icon-B-54 and tips-bar-bg aren't rendered
+* If gs-top-bar exists, bg-title isn't rendered
+------------------------------------------
+Settings
+01 background
+02 bg-title
+03 tips-bar-bg
+04 icon-A-54
+05 icon-B-54
+06 div-line-h
+07 bg-list-s
+08 icon-Shutdown
+09 icon-brightness-48
+10 color
+11 icon-language-48
+12 sound-icon
+13 icon-device-info-48
+14 icon-left-arrow24
+15 icon-right-arrow24
+16 power
+
+* Icons of the bottom option currently visible on the screen is  rendered above the others
+------------------------------------------
+Apps
+01 background
+02 bg-title
+03 toggle-off
+04 toggle-on
+05 tips-bar-bg
+06 icon-A-54
+07 icon-B-54
+08 div-line-h
+09 bg-list-l
+10 power
+------------------------------------------
+Game Systems
+01 background
+02 bg-title
+03 div-line-h
+04 tips-bar-bg
+05 icon-A-54
+06 icon-B-54
+07 bg-game-item-f
+08 bg-game-item-n
+09 power
+
+* Icons of the bottom-right option currently visible on the screen are rendered above the others (including game system icons)
+* If bg-game-item-n is left transparent, an image cropped from the centre of the background will be used instead
+------------------------------------------
+Roms
+01 background
+02 bg-title
+04 tips-bar-bg
+05 icon-A-54
+07 icon-B-54
+08 div-line-h
+09 bg-list-s
+10 icon-folder
+11 icon-game
+12 icon-TF
+13 preview-bg / preview image/icon
+14 ic-favorite-mark
+15 Empty
+16 power
+
+* "icon-TF" is only visible when you press START.
+* "Empty" is only rendered if the directory doesn't have any files or visible subdirectories in it
+------------------------------------------
+Context Menu
+01 tips-bar-bg
+02 icon-A-54
+03 icon-B-54
+04 bg-pop-menu-1 (/2/3)
+05 bg-list-s
+
+* bg-pop-menu-1/2/3 is used depending on the number of available options in the current context menu
+------------------------------------------
+Popup Notification
+01 tips-bar-bg
+02 icon-A-54
+03 icon-B-54
+04 pop-bg
+05 bg-button-f
+------------------------------------------
+Prompt Menu
+01 tips-bar-bg
+02 icon-A-54
+03 icon-B-54
+04 pop-bg
+05 icon-A-54 (second)
+06 icon-B-54 (second)
+------------------------------------------
+Shut Down
+01 Screen_Off
+------------------------------------------
+Shut Down + Save
+01 Screen_Off_Save
+------------------------------------------
+Boot
+01 bootScreen
+------------------------------------------
+Loading
+01 background
+02 progress-dot
+------------------------------------------
+Charging
+01 chargingState0 - chargingState23
+------------------------------------------
+Expert
+01 background
+02 bg-title
+03 div-line-v-01
+04 div-line-h
+05 tips-bar-bg
+06 icon-A-54
+07 icon-B-54
+08 bg-ra-list-item
+09 power
+------------------------------------------
+Game Info
+01 background
+02 bg-title
+03 tips-bar-bg
+04 icon-A-54
+05 icon-B-54
+06 thumb-default / preview image/icon
+07 num-bg
+08 list-num
+09 ic-favorite-mark
+10 power
+
+* "list-num" only gets cropped horizontally

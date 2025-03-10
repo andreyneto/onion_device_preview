@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.2.1
+  dynamic_fonts: ^2.2.1
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

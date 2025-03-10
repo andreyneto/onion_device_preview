@@ -1,0 +1,51 @@
+{
+  "name": "",
+  "author": "",
+  "description": "",
+  "hideLabels": {
+    "icons": false,
+    "hints": false
+  },
+  "batteryPercentage": {
+    "visible": false,
+    "font": null,
+    "size": 24,
+    "color": "#ffffff",
+    "textAlign": "left",
+    "fixed": false,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "frame": {
+    "border-left": 0,
+    "border-right": 0
+  },
+  "title": {
+    "font": null,
+    "size": 36,
+    "color": "#ffffff"
+  },
+  "hint": {
+    "font": null,
+    "size": 40,
+    "color": "#ffffff"
+  },
+  "currentpage": {
+    "color": "#ffffff"
+  },
+  "total": {
+    "color": "#ffffff"
+  },
+  "grid": {
+    "font": null,
+    "grid1x4": 24,
+    "grid3x4": 18,
+    "selectedcolor": "#ffffff",
+    "color": "#686868"
+  },
+  "list": {
+    "font": null,
+    "size": 24,
+    "color": "#ffffff"
+  }
+}
