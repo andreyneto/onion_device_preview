@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onion_device_preview/onion_device_preview.dart';
+import 'package:onion_device_preview/src/screens/widgets/status_indicators.dart';
 import 'package:onion_device_preview/src/screens/widgets/theme_header.dart';
 
 const _tinyPng = [
@@ -38,14 +39,13 @@ void main() {
           bgTitle: tinyImage,
           titleStyle: _titleStyle,
           titleFontFamily: 'Exo 2 Bold Italic',
-          batteryFontFamily: 'Exo 2 Bold Italic',
         ),
       );
 
       expect(tester.getSize(find.byType(ThemeHeader)), const Size(640, 60));
     });
 
-    testWidgets('renders without a title, logo or battery icon', (tester) async {
+    testWidgets('renders without a title or logo', (tester) async {
       await _pump(
         tester,
         const ThemeHeader(
@@ -53,34 +53,10 @@ void main() {
           bgTitle: null,
           titleStyle: _titleStyle,
           titleFontFamily: 'Exo 2 Bold Italic',
-          batteryFontFamily: 'Exo 2 Bold Italic',
         ),
       );
 
       expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('renders the battery pill and wifi fan without throwing', (tester) async {
-      // The battery pill and wifi fan are internal vector drawings (the
-      // real MainUI doesn't use skin assets for them — see the header
-      // painter), so there's no child widget to assert on; exercising
-      // every state must simply not throw.
-      for (final wifi in OnionWifiState.values) {
-        await _pump(
-          tester,
-          ThemeHeader(
-            background: tinyImage,
-            bgTitle: tinyImage,
-            batteryPercentage: 42,
-            batteryStyle: const OnionBatteryPercentage(visible: true, size: 20, sizeExplicit: true),
-            titleStyle: _titleStyle,
-            titleFontFamily: 'Exo 2 Bold Italic',
-            batteryFontFamily: 'Exo 2 Bold Italic',
-            wifi: wifi,
-          ),
-        );
-        expect(tester.takeException(), isNull);
-      }
     });
 
     testWidgets('showLogo: false hides the logo even when one is provided', (tester) async {
@@ -93,7 +69,6 @@ void main() {
           showLogo: false,
           titleStyle: _titleStyle,
           titleFontFamily: 'Exo 2 Bold Italic',
-          batteryFontFamily: 'Exo 2 Bold Italic',
         ),
       );
 
@@ -109,10 +84,49 @@ void main() {
           title: 'A Very Long Game Title That Would Overflow The 640px Header Easily',
           titleStyle: _titleStyle,
           titleFontFamily: 'Exo 2 Bold Italic',
-          batteryFontFamily: 'Exo 2 Bold Italic',
         ),
       );
 
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('StatusIndicators', () {
+    testWidgets('renders battery/wifi theme assets and the percentage text without throwing', (tester) async {
+      // Battery/wifi are theme assets blitted with their whole canvas
+      // centered on fixed anchors, painted as the topmost screen layer
+      // (see StatusIndicators) — exercising present/absent assets and
+      // the text overlay must not throw.
+      await _pump(
+        tester,
+        SizedBox(
+          width: 640,
+          height: 480,
+          child: StatusIndicators(
+            batteryIcon: tinyImage,
+            wifiIcon: tinyImage,
+            batteryPercentage: 42,
+            charging: false,
+            batteryStyle: const OnionBatteryPercentage(visible: true, size: 20, sizeExplicit: true),
+            batteryFontFamily: 'Exo 2 Bold Italic',
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+
+      await _pump(
+        tester,
+        const SizedBox(
+          width: 640,
+          height: 480,
+          child: StatusIndicators(
+            batteryPercentage: 100,
+            charging: true,
+            batteryStyle: OnionBatteryPercentage(visible: true),
+            batteryFontFamily: 'Exo 2 Bold Italic',
+          ),
+        ),
+      );
       expect(tester.takeException(), isNull);
     });
   });

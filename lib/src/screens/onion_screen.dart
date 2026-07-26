@@ -16,6 +16,7 @@ import 'pop_menu_screen.dart';
 import 'settings_list_screen.dart';
 import 'shutdown_screen.dart';
 import 'theme_render_context.dart';
+import 'widgets/status_indicators.dart';
 import 'widgets/theme_footer.dart';
 import 'widgets/theme_header.dart';
 
@@ -177,28 +178,23 @@ class _ScreenChrome extends StatelessWidget {
     final base = _base;
     final overlay = _overlay;
 
+    if (_fullScreenKinds.contains(base)) return _fullScreenBody(base);
+
+    final wifiAsset = _wifiAssetFor(controller.wifi);
+
     // The firmware blits `background` region-by-region in every render
     // function (header strip, list dim, footer strip...) — the net
     // effect is the full 640x480 background under everything. Painting
     // it once here keeps every screen body transparent-over-background
     // like the real thing (Silky's background is NOT black — #24262F).
-    final content = _fullScreenKinds.contains(base)
-        ? _fullScreenBody(base)
-        : Stack(
-            children: [
-              Positioned.fill(child: CustomPaint(painter: _BackgroundPainter(ctx.image(ThemeAsset.background)))),
-              _chromeBody(context, base),
-            ],
-          );
-
-    if (overlay == null) return content;
-
     return Stack(
       children: [
-        content,
-        overlay == OnionScreenKind.dialog
-            ? DialogScreen(controller: controller, ctx: ctx)
-            : PopMenuScreen(controller: controller, ctx: ctx),
+        Positioned.fill(child: CustomPaint(painter: _BackgroundPainter(ctx.image(ThemeAsset.background)))),
+        _chromeBody(context, base),
+        if (overlay != null)
+          overlay == OnionScreenKind.dialog
+              ? DialogScreen(controller: controller, ctx: ctx)
+              : PopMenuScreen(controller: controller, ctx: ctx),
         // With a pop menu open, the device re-renders the footer above
         // the scrim with OK/CANCEL and no page counter (MainUI_008).
         if (overlay == OnionScreenKind.popMenu)
@@ -218,6 +214,20 @@ class _ScreenChrome extends StatelessWidget {
               hintFontFamily: ctx.fontFamily(ctx.config.hint.font),
             ),
           ),
+        // Battery/wifi are the topmost layer — MainUI draws them last,
+        // above overlays and their scrims (MainUI_008), and a theme's
+        // icon canvas may spill far outside the header (win98 parks its
+        // battery in the taskbar via a 982x900 canvas).
+        Positioned.fill(
+          child: StatusIndicators(
+            batteryIcon: ctx.image(batteryAssetFor(controller.batteryPercent, charging: controller.charging)),
+            batteryPercentage: controller.batteryPercent,
+            charging: controller.charging,
+            batteryStyle: ctx.config.batteryPercentage,
+            batteryFontFamily: ctx.fontFamily(ctx.config.batteryPercentage.font),
+            wifiIcon: wifiAsset == null ? null : ctx.image(wifiAsset),
+          ),
+        ),
       ],
     );
   }
@@ -246,11 +256,6 @@ class _ScreenChrome extends StatelessWidget {
           title: spec.title,
           titleStyle: config.title,
           titleFontFamily: ctx.fontFamily(config.title.font),
-          batteryPercentage: controller.batteryPercent,
-          charging: controller.charging,
-          batteryStyle: config.batteryPercentage,
-          batteryFontFamily: ctx.fontFamily(config.batteryPercentage.font),
-          wifi: controller.wifi,
         ),
         Expanded(
           child: SizedBox(
@@ -320,6 +325,16 @@ class _ScreenChrome extends StatelessWidget {
     };
   }
 
+  ThemeAsset? _wifiAssetFor(OnionWifiState wifi) {
+    return switch (wifi) {
+      OnionWifiState.off => null,
+      OnionWifiState.locked => ThemeAsset.wifiLocked,
+      OnionWifiState.signal1 => ThemeAsset.wifiSignal1,
+      OnionWifiState.signal2 => ThemeAsset.wifiSignal2,
+      OnionWifiState.signal3 => ThemeAsset.wifiSignal3,
+      OnionWifiState.signal4 => ThemeAsset.wifiSignal4,
+    };
+  }
 }
 
 class _BackgroundPainter extends CustomPainter {
