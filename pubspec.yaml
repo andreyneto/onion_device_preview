@@ -1,22 +1,42 @@
 name: onion_device_preview
-description: "Miyoo Device Preview for OnionUI themes"
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+description: >-
+  Renders a Miyoo Mini / Mini+ device mockup applying an OnionUI theme
+  (from a theme zip's bytes), with mocked device state for preview.
+publish_to: 'none'
 
-version: 1.0.0+1
+version: 0.1.0
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
+  flutter: '>=3.19.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.1
-  dynamic_fonts: ^2.2.1
-  crypto: ^3.0.3
+  archive: ^3.6.1
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/default_skin/config.json
+    - assets/default_skin/skin/
+    - assets/default_skin/skin/extra/
+    - assets/default_skin/fonts/
+    - assets/default_skin/sound/
+    - assets/default_skin/icons/
+  fonts:
+    - family: Exo 2 Bold Italic
+      fonts:
+        - asset: assets/default_skin/fonts/Exo-2-Bold-Italic.ttf
+    - family: BPreplay Bold
+      fonts:
+        - asset: assets/default_skin/fonts/BPreplayBold.otf
+    - family: Helvetica Neue 2
+      fonts:
+        - asset: assets/default_skin/fonts/Helvetica-Neue-2.ttf
