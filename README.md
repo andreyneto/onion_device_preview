@@ -84,8 +84,9 @@ in `release/`, or zip a `themes/<Name>/` folder yourself.
 
 Implementation rule: **no flexible layout inside the screens** — only
 fixed-coordinate blits on the logical 640×480 canvas, mirroring the firmware's
-`SDL_BlitSurface`. The per-coordinate spec, with an evidence tag on every
-number, is in [`docs/spec-1a1.md`](docs/spec-1a1.md) (pt-BR).
+`SDL_BlitSurface`. Every coordinate carries an evidence tag in the source
+comments: derived from the firmware's own code, or measured against a device
+capture.
 
 ## Tests
 

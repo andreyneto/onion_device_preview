@@ -5,8 +5,8 @@ with the **"Silky by DiMo"** theme from the `Themes` repo — not the Silky buil
 into the firmware, which is a different theme (it ships no `skin/extra/`, so it
 never exercises the Game Switcher's custom bars).
 
-These are the calibration reference: `docs/spec-1a1.md` §11–§13 cites
-measurements taken against them, and `device_conformance_test.dart` compares
+These are the calibration reference: the measurements cited in the source
+comments were taken against them, and `device_conformance_test.dart` compares
 renders against them on every run.
 
 | file | screen | origin |

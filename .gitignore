@@ -44,3 +44,8 @@ app.*.map.json
 
 # Golden test failure output (flutter test writes here on mismatch)
 /test/failures/
+
+# Working docs — kept locally, not published
+/docs/spec-1a1.md
+/tasks.md
+/plan.md
