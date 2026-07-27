@@ -268,50 +268,58 @@ class _ControlPanel extends StatelessWidget {
   final VoidCallback onPickZip;
   final ValueChanged<String> onSelectSubtheme;
 
-  /// The screens the panel can jump to directly. Dialog/pop-menu are
-  /// overlays pushed with demo payloads; gameList opens the first mock
-  /// system's roms.
-  static const _screenChoices = <(OnionScreenKind, String)>[
-    (OnionScreenKind.boot, 'Boot'),
-    (OnionScreenKind.mainMenu, 'Main menu'),
-    (OnionScreenKind.gameSystems, 'Game systems'),
-    (OnionScreenKind.gameList, 'Rom list'),
-    (OnionScreenKind.settingsList, 'Settings'),
-    (OnionScreenKind.gameSwitcher, 'Game Switcher'),
-    (OnionScreenKind.dialog, 'Dialog'),
-    (OnionScreenKind.popMenu, 'Pop menu'),
-    (OnionScreenKind.charging, 'Charging'),
-    (OnionScreenKind.shutdown, 'Shutdown'),
+  /// The screens the panel can jump to directly, by id. Ids aren't
+  /// [OnionScreenKind]s because Apps and Settings are the same *kind* of
+  /// screen with different data. Dialog/pop-menu are overlays pushed with
+  /// demo payloads; gameList opens the first mock system's roms.
+  static const _screenChoices = <(String, String)>[
+    ('boot', 'Boot'),
+    ('mainMenu', 'Main menu'),
+    ('gameSystems', 'Game systems'),
+    ('gameList', 'Rom list'),
+    ('apps', 'Apps'),
+    ('settings', 'Settings'),
+    ('gameSwitcher', 'Game Switcher'),
+    ('dialog', 'Dialog'),
+    ('popMenu', 'Pop menu'),
+    ('charging', 'Charging'),
+    ('shutdown', 'Shutdown'),
   ];
 
-  void _showScreen(OnionScreenKind kind) {
-    switch (kind) {
-      case OnionScreenKind.boot:
-      case OnionScreenKind.mainMenu:
-      case OnionScreenKind.charging:
-      case OnionScreenKind.shutdown:
-        controller.resetTo(kind);
-      case OnionScreenKind.gameSystems:
+  void _showScreen(String id) {
+    switch (id) {
+      case 'boot':
+        controller.resetTo(OnionScreenKind.boot);
+      case 'mainMenu':
+        controller.resetTo(OnionScreenKind.mainMenu);
+      case 'charging':
+        controller.resetTo(OnionScreenKind.charging);
+      case 'shutdown':
+        controller.resetTo(OnionScreenKind.shutdown);
+      case 'gameSystems':
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.goTo(OnionScreenKind.gameSystems);
-      case OnionScreenKind.gameList:
+      case 'gameList':
         final system = OnionMockData.gameSystems.first;
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.openGameList(system.roms, system.name);
-      case OnionScreenKind.settingsList:
+      case 'apps':
+        controller.resetTo(OnionScreenKind.mainMenu);
+        controller.openSettingsTree(OnionMockData.appItems, 'Apps', showItemCounter: true);
+      case 'settings':
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.openSettingsTree(OnionMockData.settings, 'Settings');
-      case OnionScreenKind.gameSwitcher:
+      case 'gameSwitcher':
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.openGameSwitcher();
-      case OnionScreenKind.dialog:
+      case 'dialog':
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.showDialog(
           title: 'Confirmação',
           message: 'Um diálogo de exemplo.\nA confirma, B cancela.',
           showHint: true,
         );
-      case OnionScreenKind.popMenu:
+      case 'popMenu':
         final system = OnionMockData.gameSystems.first;
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.openGameList(system.roms, system.name);
@@ -324,10 +332,21 @@ class _ControlPanel extends StatelessWidget {
 
   /// Which panel choice the current navigation stack corresponds to (so
   /// the dropdown follows in-preview navigation too, not just its own
-  /// selections).
-  OnionScreenKind _currentChoice() {
-    final current = controller.currentScreen;
-    return _screenChoices.any((c) => c.$1 == current) ? current : OnionScreenKind.mainMenu;
+  /// selections). Apps and Settings are told apart by the item counter,
+  /// which is exactly what differs between them on the device.
+  String _currentChoice() {
+    return switch (controller.currentScreen) {
+      OnionScreenKind.boot => 'boot',
+      OnionScreenKind.mainMenu => 'mainMenu',
+      OnionScreenKind.gameSystems => 'gameSystems',
+      OnionScreenKind.gameList => 'gameList',
+      OnionScreenKind.settingsList => controller.settingsShowItemCounter ? 'apps' : 'settings',
+      OnionScreenKind.gameSwitcher => 'gameSwitcher',
+      OnionScreenKind.dialog => 'dialog',
+      OnionScreenKind.popMenu => 'popMenu',
+      OnionScreenKind.charging => 'charging',
+      OnionScreenKind.shutdown => 'shutdown',
+    };
   }
 
   @override
@@ -374,14 +393,14 @@ class _ControlPanel extends StatelessWidget {
             const Divider(height: 32),
             Text('Tela', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
-            DropdownButtonFormField<OnionScreenKind>(
+            DropdownButtonFormField<String>(
               initialValue: _currentChoice(),
               decoration: const InputDecoration(isDense: true),
               items: [
-                for (final (kind, label) in _screenChoices) DropdownMenuItem(value: kind, child: Text(label)),
+                for (final (id, label) in _screenChoices) DropdownMenuItem(value: id, child: Text(label)),
               ],
-              onChanged: (kind) {
-                if (kind != null) _showScreen(kind);
+              onChanged: (id) {
+                if (id != null) _showScreen(id);
               },
             ),
             SwitchListTile(
