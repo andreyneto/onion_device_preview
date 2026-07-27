@@ -38,9 +38,6 @@ flutter:
     - family: BPreplay Bold
       fonts:
         - asset: assets/default_skin/fonts/BPreplayBold.otf
-    - family: Helvetica Neue 2
-      fonts:
-        - asset: assets/default_skin/fonts/Helvetica-Neue-2.ttf
     # HENB.TTF is HelveticaNeue-Bold (per its name table) and the single most
     # referenced system font across the real theme repo.
     - family: Helvetica Neue Bold

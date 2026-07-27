@@ -25,7 +25,6 @@ const Map<String, String> kBundledSystemFontFamilies = {
   'Exo-2-Bold-Italic.ttf': 'packages/onion_device_preview/Exo 2 Bold Italic',
   'Exo-2-Bold-Italic_Universal.ttf': 'packages/onion_device_preview/Exo 2 Bold Italic',
   'BPreplayBold.otf': 'packages/onion_device_preview/BPreplay Bold',
-  'Helvetica-Neue-2.ttf': 'packages/onion_device_preview/Helvetica Neue 2',
   // HelveticaNeue-Bold, per the font's own name table. The most referenced
   // system font in the real theme repo (23 of 202 themes) — before it was
   // bundled, all of them silently rendered in italic Exo 2.

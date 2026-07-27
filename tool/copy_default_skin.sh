@@ -81,8 +81,12 @@ cp "$GS_RES_DIR/arrowRight.png" "$DEST_DIR/skin/extra/"
 # rendered in the wrong face. See plan.md §3/F3.
 cp "$ONION_APP_DIR/Exo-2-Bold-Italic.ttf" "$DEST_DIR/fonts/"
 cp "$ONION_APP_DIR/BPreplayBold.otf" "$DEST_DIR/fonts/"
-cp "$ONION_APP_DIR/Helvetica-Neue-2.ttf" "$DEST_DIR/fonts/"
 cp "$ONION_APP_DIR/HENB.TTF" "$DEST_DIR/fonts/"
+# Helvetica-Neue-2.ttf deliberadamente NAO: a licenca dela proibe
+# redistribuicao ("may not be reproduced... without the express written
+# approval of Heidelberger Druckmaschinen AG") e apenas 1 dos 202 temas do
+# repo Themes a referencia, entao o custo de fidelidade e nulo. Temas que
+# pedirem por ela caem no fallback, como qualquer fonte de sistema ausente.
 # 5.2 MB TrueType Collection — deliberately NOT declared under pubspec `fonts:`
 # (that would load it at startup for every consumer). It ships as a plain asset
 # and OnionFontResolver registers it lazily, only when a theme asks for it.
