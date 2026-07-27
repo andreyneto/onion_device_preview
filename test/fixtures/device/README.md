@@ -1,29 +1,29 @@
-# Capturas nativas 640×480 do device
+# Native 640×480 device captures
 
-Screenshots do Miyoo Mini Plus rodando OnionOS **v4.4.0-beta2-f11f7a0d** com o
-tema **"Silky by DiMo"** do repo `Themes/` — não a Silky embutida no firmware,
-que é outro tema (não traz `skin/extra/`, então nunca exercita as barras
-customizadas do Game Switcher).
+Screenshots from a Miyoo Mini Plus running OnionOS **v4.4.0-beta2-f11f7a0d**
+with the **"Silky by DiMo"** theme from the `Themes` repo — not the Silky built
+into the firmware, which is a different theme (it ships no `skin/extra/`, so it
+never exercises the Game Switcher's custom bars).
 
-São a referência de calibração: `docs/spec-1a1.md` §11–§13 cita medições feitas
-contra estes arquivos, e `device_conformance_test.dart` compara renders contra
-eles a cada execução.
+These are the calibration reference: `docs/spec-1a1.md` §11–§13 cites
+measurements taken against them, and `device_conformance_test.dart` compares
+renders against them on every run.
 
-| arquivo | tela | origem |
+| file | screen | origin |
 |---|---|---|
-| `dev_gs_empty.png` | Game Switcher sem histórico | captura direta (Menu+Power) |
-| `dev_gs_dialog.png` | Game Switcher, "Remove from history" | captura direta |
-| `dev_gs_time.png` | Game Switcher com tempo no header | captura direta |
-| `dev_settings.png` | Settings | recortado de `docs/images/device-vs-render.png` |
-| `dev_game_list.png` | lista de roms (Arcade) | idem |
-| `dev_game_systems.png` | grade de sistemas | idem |
-| `dev_pop_menu.png` | pop menu sobre a lista | idem |
+| `dev_gs_empty.png` | Game Switcher, no history | direct capture (Menu+Power) |
+| `dev_gs_dialog.png` | Game Switcher, "Remove from history" | direct capture |
+| `dev_gs_time.png` | Game Switcher with playtime in the header | direct capture |
+| `dev_settings.png` | Settings | cropped from `docs/images/device-vs-render.png` |
+| `dev_game_list.png` | rom list (Arcade) | idem |
+| `dev_game_systems.png` | systems grid | idem |
+| `dev_pop_menu.png` | pop menu over the list | idem |
 
-Os quatro últimos vieram da coluna esquerda daquele composite, que é onde os
-`MainUI_004..013` originais sobreviveram — eles tinham sido perdidos com o
-scratchpad da sessão que os usou. **Este diretório existe para que isso não se
-repita**: capturas novas entram aqui, não num diretório temporário.
+The last four came from that composite's left column, which is where the
+original `MainUI_004..013` survived — they had been lost along with the
+scratchpad of the session that used them. **This directory exists so that
+doesn't happen again**: new captures go here, not into a temp dir.
 
-Boot, charging e shutdown não estão aqui: o MainUI não está rodando nesses
-momentos para atender o atalho de screenshot, então só existem como vídeo de
-celular — bom para validar presença e posição relativa, não geometria ao pixel.
+Boot, charging and shutdown aren't here: MainUI isn't running at those moments
+to serve the screenshot shortcut, so they only exist as phone video — good for
+validating presence and relative position, not pixel geometry.

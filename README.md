@@ -1,124 +1,106 @@
 # onion_device_preview
 
-Package Flutter que renderiza um mockup do **Miyoo Mini / Mini+** rodando
-[OnionOS](https://github.com/OnionUI/Onion), aplicando um tema OnionUI a partir
-dos bytes de um `.zip` — com estado de device mockado (bateria, wi-fi, telas,
-navegação por teclado) para pré-visualizar temas sem um console na mão.
+Flutter package that renders a **Miyoo Mini / Mini+** mockup running
+[OnionOS](https://github.com/OnionUI/Onion), applying a theme straight from a
+`.zip`'s bytes — with mocked device state (battery, wi-fi, screens, keyboard
+navigation) so you can preview themes without a console at hand.
 
-![Main menu com o skin default (Silky)](docs/images/main-menu.png)
+![Main menu with the bundled default skin](docs/images/main-menu.png)
 
-O rendering é calibrado **1:1 contra o firmware**: coordenadas derivadas do
-código C aberto do Onion (`src/common/theme/render/*`) e, onde o MainUI é
-fechado, medidas por template matching contra screenshots nativos do device
-(≤2px de desvio — ver `docs/spec-1a1.md`).
+Rendering is calibrated **1:1 against the firmware** — derived from its source
+where it's open, and measured against native device screenshots where it isn't
+(≤2px deviation).
 
-![Device real vs render deste package](docs/images/device-vs-render.png)
+![Real device vs this package's render](docs/images/device-vs-render.png)
 
-> **Escopo**: projeto pessoal, publicado por visibilidade. Funciona e é testado,
-> mas não tem compromisso de suporte, roadmap ou estabilidade de API. Fique à
-> vontade para forkar; issues e PRs podem ficar sem resposta.
+> **Scope**: personal project, published for visibility. It works and it's
+> tested, but there's no commitment to support, roadmap or API stability. Feel
+> free to fork; issues and PRs may go unanswered.
 
-## Uso da API
+## API usage
 
 ```dart
 import 'package:onion_device_preview/onion_device_preview.dart';
 
 final controller = OnionPreviewController();
 
-// Tema de um zip (ex.: baixado do repo OnionUI/Themes)...
+// A theme from a zip...
 final bundle = OnionThemeBundle.fromZipBytes(zipBytes);
-await controller.loadTheme(bundle); // atômico: falha mantém o tema anterior
+await controller.loadTheme(bundle); // atomic: on failure the old theme stays
 
-// ...ou o skin default (Silky) embutido:
+// ...or the bundled default skin:
 await controller.loadTheme(OnionThemeBundle.defaultTheme());
 
-// Na árvore de widgets:
-MiyooDeviceShell(controller: controller)   // device completo clicável
-OnionScreen(controller: controller)        // só a tela 640x480 (zoom fit/1x/1.5x/2x)
-ThemeInspector(controller: controller)     // painel diagnóstico do tema
+// In the widget tree:
+MiyooDeviceShell(controller: controller)   // full clickable device
+OnionScreen(controller: controller)        // just the 640x480 screen (zoom fit/1x/1.5x/2x)
+ThemeInspector(controller: controller)     // theme diagnostics panel
 ```
 
-- **Packs** (zip com vários temas): `bundle.isPack` / `bundle.availableRoots` /
-  `bundle.withRoot(path)`.
-- **Estado mockado**: `setBatteryPercent`, `setCharging`, `setWifi`,
-  `setExpertMode`, `setShowRecents`, `setForceHideLabels`, `setSoundEnabled`
-  (bgm + som de navegação do tema), `setApplyThemeIcons` (usar a pasta `icons/`
-  do tema, como o ThemeSwitcher do device), navegação via
-  `pressA/B/X/Y/Start/Select/Menu` e `moveUp/Down/Left/Right`.
-- **Teclado** (layout RetroArch): setas = D-pad, `X` = A, `Z` = B, `A` = Y,
-  `S` = X, `Enter` = Start, `Shift` = Select, `Esc` = Menu (abre o Game
-  Switcher).
+- **Packs** (a zip holding several themes): `bundle.isPack` /
+  `bundle.availableRoots` / `bundle.withRoot(path)`.
+- **Mocked state**: `setBatteryPercent`, `setCharging`, `setWifi`,
+  `setExpertMode`, `setShowRecents`, `setForceHideLabels`, `setSoundEnabled`,
+  `setApplyThemeIcons`, `setGsHistoryEmpty`, plus navigation via
+  `pressA/B/X/Y/Start/Select/Menu` and `moveUp/Down/Left/Right`.
+- **Keyboard** (RetroArch layout): arrows = D-pad, `X` = A, `Z` = B, `A` = Y,
+  `S` = X, `Enter` = Start, `Shift` = Select, `Esc` = Menu (Game Switcher).
 
-## Rodando o example (web)
+## Using it from another project
+
+Not on pub.dev — depend on it from git:
+
+```yaml
+dependencies:
+  onion_device_preview:
+    git:
+      url: https://github.com/andreyneto/onion_device_preview.git
+      ref: v0.1.0
+```
+
+Package assets resolve on their own, so nothing extra is needed in the
+consuming app.
+
+## Running the example (web)
 
 ```bash
 cd example
-flutter run -d chrome        # ou: flutter run -d web-server --web-port=8765
+flutter run -d chrome
 ```
 
-O example tem drop zone para `.zip` de tema (arraste sobre a janela), file
-picker, seletor de subtema para packs, painel de controle completo e o
-inspector. Build de produção: `flutter build web --release`.
+Drop zone for theme `.zip`s (drag onto the window), file picker, sub-theme
+selector for packs, full control panel and the inspector. Any theme from
+[OnionUI/Themes](https://github.com/OnionUI/Themes) works — prebuilt zips are
+in `release/`, or zip a `themes/<Name>/` folder yourself.
 
-### Gerando um zip de teste
+## Architecture
 
-Qualquer tema do repo [OnionUI/Themes](https://github.com/OnionUI/Themes)
-serve — os prontos estão em `release/*.zip`, ou zipe uma pasta de
-`themes/<Nome>/` (o zip pode ter `config.json` + `skin/` na raiz ou um nível
-abaixo).
-
-## Arquitetura (resumo)
-
-| Camada | O quê |
+| Layer | What |
 |---|---|
-| `src/core/` | `OnionThemeBundle` (zip em memória, packs), `OnionThemeConfig` (parser tolerante com os fallbacks do firmware), `AssetResolver` (tema → skin default → null), `IconPackResolver` (`icons/`, `icons/sel/`, `icons/app/` → pack Default), `OnionFontResolver` (fontes do zip via FontLoader; fontes de sistema embutidas, com a `wqy-microhei.ttc` registrada sob demanda), mock data |
-| `src/device/` | `OnionPreviewController` (ChangeNotifier: tema resolvido, navegação em pilha, cursores, handlers por tela, sons), `MiyooDeviceShell`, `InputMapper`, `OnionSoundBank` |
-| `src/screens/` | As telas do OnionUI em blits de coordenada fixa (main menu, game systems, listas, apps, Game Switcher, dialog, pop menu, boot/charging/shutdown) + header/footer compartilhados |
-| `src/inspector/` | `ThemeInspector` (config com proveniência tema/default, assets encontrados/ausentes, fontes) |
+| `src/core/` | `OnionThemeBundle` (in-memory zip, packs), `OnionThemeConfig` (lenient parser mirroring the firmware's fallbacks), `AssetResolver` (theme → default skin → null), `IconPackResolver`, `OnionFontResolver`, mock data |
+| `src/device/` | `OnionPreviewController` (ChangeNotifier: resolved theme, navigation stack, cursors, per-screen handlers, sound), `MiyooDeviceShell`, `InputMapper`, `OnionSoundBank` |
+| `src/screens/` | The screens as fixed-coordinate blits (main menu, game systems, lists, apps, Game Switcher, dialog, pop menu, boot/charging/shutdown) + shared header/footer |
+| `src/inspector/` | `ThemeInspector` (config provenance, assets found/missing, fonts) |
 
-Princípio de implementação: **nenhum layout flexível nas telas** — só blit em
-coordenada fixa no canvas lógico 640×480, espelhando o `SDL_BlitSurface` do
-firmware. A especificação completa, com evidência por coordenada
-([SRC]/[MEAS]/[IMG]), está em [`docs/spec-1a1.md`](docs/spec-1a1.md).
+Implementation rule: **no flexible layout inside the screens** — only
+fixed-coordinate blits on the logical 640×480 canvas, mirroring the firmware's
+`SDL_BlitSurface`. The per-coordinate spec, with an evidence tag on every
+number, is in [`docs/spec-1a1.md`](docs/spec-1a1.md) (pt-BR).
 
-## Testes
+## Tests
 
 ```bash
-flutter test                          # inclui goldens das telas calibradas
-flutter test --update-goldens         # regenera goldens deliberadamente
+flutter test                          # includes goldens of the calibrated screens
+flutter test --update-goldens         # regenerate goldens deliberately
 ```
 
-`test/real_themes_robustness_test.dart` roda o parser contra todos os
-`config.json` do checkout irmão `../Themes` (pulado se ausente). Os assets do
-skin default vêm de `../Onion` via `tool/copy_default_skin.sh`.
+Two layers beyond the unit tests: **goldens** freeze what this package draws,
+and `device_conformance_test.dart` compares renders against native device
+captures in `test/fixtures/device/` — so an accidentally regenerated golden
+still gets caught.
 
-## Licença e assets de terceiros
+## License
 
-O código é **GPL v3** (`LICENSE`) — mesma licença do
-[OnionUI/Onion](https://github.com/OnionUI/Onion), de onde vem o conteúdo de
-`assets/default_skin/`: skin padrão, `config.json`, o pack de ícones `Default`,
-a arte de boot/shutdown e a animação de charging. Esses arquivos são
-redistribuídos aqui porque são o fallback que o próprio firmware aplica quando
-um tema não traz um asset — sem eles o preview teria buracos que o device real
-não tem.
-
-As fontes de sistema em `assets/default_skin/fonts/` são as que os temas
-referenciam por caminho absoluto (`/mnt/SDCARD/miyoo/app/...`) e nunca
-empacotam:
-
-| fonte | licença |
-|---|---|
-| `Exo-2-Bold-Italic.ttf` | SIL OFL |
-| `BPreplayBold.otf` | SIL OFL |
-| `wqy-microhei.ttc` | GPL v3 com exceção de fonte / Apache 2.0 |
-| `HENB.TTF` | proprietária (Adobe/Linotype) — ver nota abaixo |
-
-`HENB.TTF` é HelveticaNeue-Bold e é a fonte de sistema mais referenciada pelos
-temas reais (23 dos 202 do repo `Themes`). Está aqui pelo mesmo motivo que está
-no firmware Onion: sem ela esses temas renderizam na face errada. A
-`Helvetica-Neue-2.ttf`, cuja licença proíbe redistribuição explicitamente, foi
-**deliberadamente deixada de fora** — apenas 1 tema a referencia, e ele cai no
-fallback.
-
-Screenshots do device em `test/fixtures/device/` são capturas próprias, de um
-Miyoo Mini Plus rodando OnionOS.
+**GPL v3** (`LICENSE`), matching [OnionUI/Onion](https://github.com/OnionUI/Onion),
+whose default skin and system fonts are bundled under `assets/default_skin/` as
+the fallback the firmware itself applies for assets a theme doesn't ship.
