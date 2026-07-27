@@ -74,11 +74,19 @@ cp "$GS_RES_DIR"/lum*.png "$DEST_DIR/skin/extra/"
 cp "$GS_RES_DIR/arrowLeft.png" "$DEST_DIR/skin/extra/"
 cp "$GS_RES_DIR/arrowRight.png" "$DEST_DIR/skin/extra/"
 
-# System fonts (non-CJK, non-.ttc — Flutter's font loader doesn't support
-# TrueType Collections). See plan.md §3/F3.
+# System fonts: every font under /mnt/SDCARD/miyoo/app/ that a real theme's
+# config.json references by absolute path. Counted over the 202 themes in the
+# sibling Themes/ checkout: HENB.TTF (23) and wqy-microhei.ttc (23) are the two
+# most referenced — both were missing here until now, so ~23% of real themes
+# rendered in the wrong face. See plan.md §3/F3.
 cp "$ONION_APP_DIR/Exo-2-Bold-Italic.ttf" "$DEST_DIR/fonts/"
 cp "$ONION_APP_DIR/BPreplayBold.otf" "$DEST_DIR/fonts/"
 cp "$ONION_APP_DIR/Helvetica-Neue-2.ttf" "$DEST_DIR/fonts/"
+cp "$ONION_APP_DIR/HENB.TTF" "$DEST_DIR/fonts/"
+# 5.2 MB TrueType Collection — deliberately NOT declared under pubspec `fonts:`
+# (that would load it at startup for every consumer). It ships as a plain asset
+# and OnionFontResolver registers it lazily, only when a theme asks for it.
+cp "$ONION_APP_DIR/wqy-microhei.ttc" "$DEST_DIR/fonts/"
 
 rm -f "$DEST_DIR/.gitkeep"
 

@@ -63,11 +63,11 @@ extension OnionCanvasOps on Canvas {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(
+        style: onionTextStyle(
+          style,
           fontFamily: fontFamily,
-          fontSize: style.size.toDouble(),
+          bold: bold,
           color: style.color.withAlpha((opacity.clamp(0, 1) * 0xFF).round()),
-          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -86,16 +86,38 @@ extension OnionCanvasOps on Canvas {
     bool bold = false,
   }) {
     return TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: style.size.toDouble(),
-          color: style.color,
-          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
+      text: TextSpan(text: text, style: onionTextStyle(style, fontFamily: fontFamily, bold: bold)),
       textDirection: TextDirection.ltr,
     )..layout();
   }
+}
+
+/// Builds the [TextStyle] every on-screen string is drawn with, so painted
+/// and measured text can never drift apart.
+///
+/// The [letterSpacing] is what makes bold text match the device. The
+/// firmware bolds exactly one font — the list font
+/// (`resources.h:258`, `TTF_SetFontStyle(font, TTF_STYLE_BOLD)`) — and
+/// none of the fonts it ships carry a bold cut, so SDL_ttf synthesizes
+/// one. Its synthetic bold does two things: it thickens the glyph bitmap
+/// *and* widens every glyph's advance by
+/// `glyph_overhang = face->size->metrics.y_ppem / 10` (integer division).
+/// Flutter's fake-bold only thickens — advances stay put — so before this,
+/// every list row rendered progressively short: at the stock size of 25
+/// the device gains 2px per character, which is 28px over "Change
+/// language". Measured against the device screenshots in
+/// `docs/images/device-vs-render.png`; see spec §11.11.
+TextStyle onionTextStyle(
+  OnionFontStyle style, {
+  required String fontFamily,
+  bool bold = false,
+  Color? color,
+}) {
+  return TextStyle(
+    fontFamily: fontFamily,
+    fontSize: style.size.toDouble(),
+    color: color ?? style.color,
+    fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+    letterSpacing: bold ? (style.size ~/ 10).toDouble() : null,
+  );
 }

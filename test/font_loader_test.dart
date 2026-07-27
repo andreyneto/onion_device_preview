@@ -46,19 +46,49 @@ void main() {
       final family = await resolver.resolveFamily('/mnt/SDCARD/miyoo/app/MicrosoftYaHeiGB.ttf');
 
       expect(family, kOnionFallbackFontFamily);
+      expect(resolver.failed, contains('/mnt/SDCARD/miyoo/app/MicrosoftYaHeiGB.ttf'));
+    });
+
+    test('HENB.TTF — the most referenced system font — resolves to its own family', () async {
+      final resolver = OnionFontResolver(OnionThemeBundle.defaultTheme());
+
+      final family = await resolver.resolveFamily('/mnt/SDCARD/miyoo/app/HENB.TTF');
+
+      // Not the Exo 2 fallback: 23 of the 202 real themes ask for this face.
+      expect(family, 'packages/onion_device_preview/Helvetica Neue Bold');
+      expect(resolver.failed, isEmpty);
+    });
+
+    test('wqy-microhei.ttc registers the real face lazily instead of standing in Roboto', () async {
+      final resolver = OnionFontResolver(OnionThemeBundle.defaultTheme());
+
+      final family = await resolver.resolveFamily('/mnt/SDCARD/miyoo/app/wqy-microhei.ttc');
+
+      expect(family, isNot(kOnionTtcFallbackFontFamily));
+      expect(family, 'onion-system-wqy-microhei.ttc');
+      expect(resolver.failed, isEmpty);
+    });
+
+    test('the lazily registered face is shared across resolver instances', () async {
+      final a = OnionFontResolver(OnionThemeBundle.defaultTheme());
+      final b = OnionFontResolver(OnionThemeBundle.defaultTheme());
+
+      // Unlike theme-provided fonts (namespaced per instance), a system
+      // font is the package's own file — same bytes, so same family.
+      expect(
+        await a.resolveFamily('/mnt/SDCARD/miyoo/app/wqy-microhei.ttc'),
+        await b.resolveFamily('/mnt/SDCARD/miyoo/app/wqy-microhei.ttc'),
+      );
     });
   });
 
   group('OnionFontResolver — theme-provided fonts', () {
-    test('.ttc paths fall back to the upright CJK stand-in (not decodable by FontLoader)', () async {
+    test('a relative .ttc missing from the zip falls back like any missing font', () async {
       final resolver = OnionFontResolver(OnionThemeBundle.defaultTheme());
 
-      // Both relative and absolute (stock Silky's list font) .ttc paths.
-      expect(await resolver.resolveFamily('wqy-microhei.ttc'), kOnionTtcFallbackFontFamily);
-      expect(
-        await resolver.resolveFamily('/mnt/SDCARD/miyoo/app/wqy-microhei.ttc'),
-        kOnionTtcFallbackFontFamily,
-      );
+      // Nothing special about the container format here: the zip simply
+      // doesn't carry this file.
+      expect(await resolver.resolveFamily('wqy-microhei.ttc'), kOnionFallbackFontFamily);
       expect(resolver.failed, contains('wqy-microhei.ttc'));
     });
 

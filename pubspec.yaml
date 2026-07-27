@@ -41,3 +41,10 @@ flutter:
     - family: Helvetica Neue 2
       fonts:
         - asset: assets/default_skin/fonts/Helvetica-Neue-2.ttf
+    # HENB.TTF is HelveticaNeue-Bold (per its name table) and the single most
+    # referenced system font across the real theme repo.
+    - family: Helvetica Neue Bold
+      fonts:
+        - asset: assets/default_skin/fonts/HENB.TTF
+    # wqy-microhei.ttc is intentionally absent from this list: see
+    # OnionFontResolver, which registers it lazily from the asset bundle.

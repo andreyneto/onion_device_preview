@@ -10,9 +10,12 @@ import 'package:onion_device_preview/onion_device_preview.dart';
 /// stock preview and real-device screenshots (docs/spec-1a1.md §10/§11).
 /// Regenerate deliberately with `flutter test --update-goldens`.
 ///
-/// Fonts are registered under the exact families production resolves
-/// (the packages/-prefixed Exo 2, and Roboto for the .ttc fallback), so
-/// text renders with real glyphs instead of the Ahem placeholder.
+/// Fonts are registered under the exact families production resolves (the
+/// packages/-prefixed Exo 2), so text renders with real glyphs instead of
+/// the Ahem placeholder. Roboto is still registered here because it stays
+/// the last-resort family in [kOnionTtcFallbackFontFamily]; the list font
+/// itself is no longer Roboto — OnionFontResolver registers the real
+/// `wqy-microhei.ttc` from the asset bundle.
 void main() {
   testWidgets('screens match their goldens with the default skin', (tester) async {
     tester.view.physicalSize = const Size(640, 480);
