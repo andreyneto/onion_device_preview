@@ -33,9 +33,7 @@ Future<List<ThemeListItem>> _rows(
   return tester.widgetList<ThemeListItem>(find.byType(ThemeListItem)).toList();
 }
 
-List<OnionMockSettingsItem> get _appItems => [
-      for (final app in OnionMockData.apps) OnionMockSimpleItem(app.name, large: true, iconPackName: app.iconName),
-    ];
+List<OnionMockSettingsItem> get _appItems => OnionMockData.appItems;
 
 void main() {
   testWidgets('settings rows receive their skin icons', (tester) async {

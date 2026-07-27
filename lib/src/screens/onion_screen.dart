@@ -329,10 +329,15 @@ class _ScreenChrome extends StatelessWidget {
           totalPages: GameSystemsScreen.pageCount,
           body: GameSystemsScreen(controller: controller, ctx: ctx),
         ),
+      // Apps shows an item counter, Settings doesn't (MainUI_013 vs _012).
       OnionScreenKind.settingsList => _ScreenSpec(
           title: controller.settingsTitle,
           hintA: 'SELECT',
           hintB: 'BACK',
+          currentPage: controller.settingsShowItemCounter
+              ? controller.selectionFor(OnionScreenKind.settingsList) + 1
+              : null,
+          totalPages: controller.settingsShowItemCounter ? controller.settingsRoot.length : null,
           body: SettingsListScreen(controller: controller, ctx: ctx),
         ),
       // Boot/charging/shutdown never reach here (handled by

@@ -135,7 +135,7 @@ class _SettingsListScreenState extends State<SettingsListScreen> {
   }
 
   static bool _isLarge(OnionMockSettingsItem item) =>
-      item is OnionMockSimpleItem && (item.large || (item.description?.isNotEmpty ?? false));
+      item is OnionMockSimpleItem && (item.description?.isNotEmpty ?? false);
 
   /// A row's leading icon: Settings rows use a themable *skin* icon,
   /// Apps rows an *icon pack* icon (whose focused variant may differ —

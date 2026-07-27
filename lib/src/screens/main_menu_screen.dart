@@ -93,16 +93,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
           onConfirm: () => widget.controller.showDialog(title: 'RetroArch', message: 'Launched (mock).'),
         );
       case 'app':
-        // Apps are `bg-list-l` (tall) rows with an icon-pack icon, one
-        // per installed app — see docs/guide.txt ("Apps") and
-        // IconPackResolver.
-        widget.controller.openSettingsTree(
-          [
-            for (final app in OnionMockData.apps)
-              OnionMockSimpleItem(app.name, large: true, iconPackName: app.iconName),
-          ],
-          'Apps',
-        );
+        // Apps are `bg-list-l` (tall) rows with an icon-pack icon and a
+        // description, plus an item counter in the footer (MainUI_013).
+        widget.controller.openSettingsTree(OnionMockData.appItems, 'Apps', showItemCounter: true);
       case 'setting':
         widget.controller.openSettingsTree(OnionMockData.settings, 'Settings');
     }

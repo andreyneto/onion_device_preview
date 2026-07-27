@@ -84,13 +84,7 @@ void main() {
       await _renderTo(tester, controller, 'settings');
 
       controller.resetTo(OnionScreenKind.mainMenu);
-      controller.openSettingsTree(
-        [
-          for (final app in OnionMockData.apps)
-            OnionMockSimpleItem(app.name, large: true, iconPackName: app.iconName),
-        ],
-        'Apps',
-      );
+      controller.openSettingsTree(OnionMockData.appItems, 'Apps', showItemCounter: true);
       await _renderTo(tester, controller, 'apps');
 
       // Game Switcher (T7.2) — the legend is up for the first 5s, so the

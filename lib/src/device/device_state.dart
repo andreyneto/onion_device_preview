@@ -175,14 +175,22 @@ class OnionPreviewController extends ChangeNotifier {
   }
 
   List<_SettingsFrame> _settingsStack = [_SettingsFrame('Settings', OnionMockData.settings)];
+  bool _settingsShowItemCounter = false;
   List<OnionMockSettingsItem> get settingsRoot => _settingsStack.last.items;
   String get settingsTitle => _settingsStack.last.title;
+
+  /// Whether the footer shows an `item/total` counter for the current
+  /// settings-style list. The device shows one on the **Apps** list
+  /// (MainUI_013: `1/17`) but not on Settings (MainUI_012) — so it's the
+  /// caller's call, not a property of the screen.
+  bool get settingsShowItemCounter => _settingsShowItemCounter;
 
   /// Opens (pushes) a settings-style list for [items] (also used to show
   /// the Apps tab, which shares the same row widget), replacing any
   /// submenu depth from a previous visit.
-  void openSettingsTree(List<OnionMockSettingsItem> items, String title) {
+  void openSettingsTree(List<OnionMockSettingsItem> items, String title, {bool showItemCounter = false}) {
     _settingsStack = [_SettingsFrame(title, items)];
+    _settingsShowItemCounter = showItemCounter;
     resetSelection(OnionScreenKind.settingsList);
     goTo(OnionScreenKind.settingsList);
   }

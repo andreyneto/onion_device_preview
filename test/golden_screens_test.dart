@@ -97,13 +97,7 @@ void main() {
     await stage(() async {
       controller.goBack();
       controller.resetTo(OnionScreenKind.mainMenu);
-      controller.openSettingsTree(
-        [
-          for (final app in OnionMockData.apps)
-            OnionMockSimpleItem(app.name, large: true, iconPackName: app.iconName),
-        ],
-        'Apps',
-      );
+      controller.openSettingsTree(OnionMockData.appItems, 'Apps', showItemCounter: true);
     });
     await expectLater(screen, matchesGoldenFile('goldens/apps.png'));
   });

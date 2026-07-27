@@ -38,9 +38,13 @@ class OnionMockSwitcherGame {
 }
 
 class OnionMockApp {
-  const OnionMockApp(this.name, this.iconName);
+  const OnionMockApp(this.name, this.description, this.iconName);
 
   final String name;
+
+  /// The `description` field of an app's `config.json`, which MainUI draws
+  /// as the row's second line (MainUI_013).
+  final String description;
 
   /// Icon-pack name under the pack's `app/` sub-tree
   /// (`apply_icons.h:104-116`), e.g. `app/retroarch`.
@@ -74,16 +78,13 @@ class OnionMockSimpleItem extends OnionMockSettingsItem {
   const OnionMockSimpleItem(
     super.label, {
     this.description,
-    this.large = false,
     super.iconSkinName,
     super.iconPackName,
   });
 
+  /// A second line under the label. Its presence is what makes the row a
+  /// tall 90px `bg-list-l` one instead of a 60px `bg-list-s`.
   final String? description;
-
-  /// Forces the taller 90px `bg-list-l` row even without a description —
-  /// the Apps list's row style (`docs/guide.txt`, "Apps" → `bg-list-l`).
-  final bool large;
 }
 
 class OnionMockToggleItem extends OnionMockSettingsItem {
@@ -161,17 +162,26 @@ class OnionMockData {
     OnionMockSystem(id: 'arcade', name: 'Arcade', roms: _romsFor('ARC')),
   ];
 
-  /// Labels and icon names taken from the real `App/*/config.json`
-  /// packages the firmware ships (`Onion/static/packages/App`), so a
-  /// theme's own `icons/app/` overrides land on the names it expects.
+  /// Labels, descriptions and icon names copied verbatim from the real
+  /// `App/*/config.json` packages the firmware ships
+  /// (`Onion/static/packages/App`), so a theme's own `icons/app/`
+  /// overrides land on the names it expects and the rows read like the
+  /// device's (MainUI_013).
   static const List<OnionMockApp> apps = [
-    OnionMockApp('RetroArch', 'app/retroarch'),
-    OnionMockApp('File Explorer', 'app/commander'),
-    OnionMockApp('GameSwitcher', 'app/gameswitcher'),
-    OnionMockApp('Battery Monitor', 'app/battery_monitor'),
-    OnionMockApp('Ebook Reader', 'app/ereader'),
-    OnionMockApp('Tweaks', 'app/tweaks'),
+    OnionMockApp('RetroArch', 'Advanced emulator settings', 'app/retroarch'),
+    OnionMockApp('File Explorer', 'DinguxCommander', 'app/commander'),
+    OnionMockApp('GameSwitcher', 'Quickly switch games', 'app/gameswitcher'),
+    OnionMockApp('Battery Monitor', 'Monitor your battery usage', 'app/battery_monitor'),
+    OnionMockApp('Ebook Reader', 'PixelReader v0.6', 'app/ereader'),
+    OnionMockApp('Tweaks', 'System tweaks and tools', 'app/tweaks'),
   ];
+
+  /// The Apps tab's rows: `bg-list-l` (tall) with the icon-pack icon and
+  /// the app's own description underneath (MainUI_013).
+  static List<OnionMockSettingsItem> get appItems => [
+        for (final app in apps)
+          OnionMockSimpleItem(app.name, description: app.description, iconPackName: app.iconName),
+      ];
 
   /// Every icon-pack name the preview's screens can ask for, resolved up
   /// front by `ThemeRenderContext` so painters stay synchronous.
