@@ -10,10 +10,9 @@ import 'theme_render_context.dart';
 
 /// The charging animation — a theme-variable-length sequence of
 /// `extra/chargingState0.png`, `chargingState1.png`, … (stopping at the
-/// first missing index, capped at [_kMaxFrames] as a sanity limit),
-/// paced by `extra/chargingState.json`'s `frame_delay` (milliseconds;
-/// values over 10000 are treated as microseconds per the plan's spec,
-/// clamped to a 15ms minimum). Neither asset is part of the fixed
+/// first missing index, capped at [_kMaxFrames] as a sanity limit), paced
+/// by `extra/chargingState.json`'s `frame_delay` (see
+/// [chargingFrameDelayMs]). Neither asset is part of the fixed
 /// [ThemeAsset] set — the frame count isn't known ahead of time — so
 /// this screen resolves them itself via [AssetResolver.resolveImageAt]
 /// rather than through the shared [ThemeRenderContext].
@@ -27,13 +26,40 @@ class ChargingScreen extends StatefulWidget {
   State<ChargingScreen> createState() => _ChargingScreenState();
 }
 
+/// The firmware's own floor on `frame_delay` (`min_delay`,
+/// `chargingState.c:105`), which is also the charging loop's `msleep`.
+const int kChargingMinDelayMs = 15;
+
+/// `frame_delay` when the sidecar is missing or unreadable
+/// (`chargingState.c:106`) — and the floor this preview actually uses;
+/// see [chargingFrameDelayMs].
+const int kChargingDefaultDelayMs = 80;
+
+/// Frame delay in milliseconds for a `chargingState.json` `frame_delay` of
+/// [raw] (null when there's no sidecar or it doesn't parse).
+///
+/// Follows `chargingState.c:126-137` — values of 10000 or more are
+/// microseconds, integer-divided — with one **deliberate deviation**: the
+/// floor is [kChargingDefaultDelayMs], not the firmware's
+/// [kChargingMinDelayMs].
+///
+/// Why: the stock sidecar asks for 15ms, but 15ms is just the loop's
+/// `msleep` — on the device each frame also costs a 640x480x32 blit plus
+/// an `SDL_Flip` on the Miyoo framebuffer, so the hardware never gets
+/// near 66fps and the real animation is visibly slower than a literal
+/// 15ms replay (confirmed by the user against their Mini+). 80ms is the
+/// firmware's own default when a theme ships frames without a sidecar,
+/// and the most common value among the themes that do ship one (25 of 67
+/// in the `Themes` repo), so it's the closest thing to an authored
+/// "intended" pace.
+int chargingFrameDelayMs(int? raw) {
+  if (raw == null) return kChargingDefaultDelayMs;
+  final ms = raw >= 10000 ? raw ~/ 1000 : raw;
+  return ms < kChargingDefaultDelayMs ? kChargingDefaultDelayMs : ms;
+}
+
 class _ChargingScreenState extends State<ChargingScreen> {
   static const _kMaxFrames = 60;
-
-  /// `min_delay` (`chargingState.c:105`): the floor on `frame_delay`, and
-  /// also the firmware loop's own `msleep`, so it doubles as the fastest
-  /// the animation can possibly run.
-  static const _kMinDelayMs = 15;
 
   List<ui.Image> _frames = const [];
   int _frameIndex = 0;
@@ -65,22 +91,19 @@ class _ChargingScreenState extends State<ChargingScreen> {
       frames.add(image);
     }
 
-    var frameDelayMs = 80;
+    int? rawDelay;
     final jsonBytes = await resolver.resolveBytesAt('skin/extra/chargingState.json');
     if (jsonBytes != null) {
       try {
         final decoded = jsonDecode(utf8.decode(jsonBytes));
         if (decoded is Map && decoded['frame_delay'] is num) {
-          final raw = (decoded['frame_delay'] as num).toInt();
-          // `value >= 10000 ? value / 1000 : value`, integer division
-          // (chargingState.c:130-131) — 10000 itself is microseconds.
-          frameDelayMs = raw >= 10000 ? raw ~/ 1000 : raw;
-          if (frameDelayMs < _kMinDelayMs) frameDelayMs = _kMinDelayMs;
+          rawDelay = (decoded['frame_delay'] as num).toInt();
         }
       } catch (_) {
         // Malformed sidecar: fall back to the default delay.
       }
     }
+    final frameDelayMs = chargingFrameDelayMs(rawDelay);
 
     if (!mounted) return;
     setState(() {

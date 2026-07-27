@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:onion_device_preview/onion_device_preview.dart';
 import 'package:onion_device_preview/src/screens/boot_screen.dart';
+import 'package:onion_device_preview/src/screens/charging_screen.dart';
 import 'package:onion_device_preview/src/screens/shutdown_screen.dart';
 import 'package:onion_device_preview/src/screens/widgets/battery_indicator.dart';
 import 'package:onion_device_preview/src/screens/widgets/boot_style_screen.dart';
@@ -69,5 +70,21 @@ void main() {
     controller.setShutdownSaving(true);
     await tester.pump();
     expect(tester.widget<BootStyleScreen>(find.byType(BootStyleScreen)).background, isNot(normalArt));
+  });
+
+  test('charging frame delay follows the sidecar, floored at the firmware default', () {
+    // No sidecar → the firmware's own default.
+    expect(chargingFrameDelayMs(null), kChargingDefaultDelayMs);
+    // Authored values above the floor are honored as-is.
+    expect(chargingFrameDelayMs(500), 500);
+    expect(chargingFrameDelayMs(80), 80);
+    // 10000+ is microseconds, integer-divided (chargingState.c:130-131).
+    expect(chargingFrameDelayMs(500000), 500);
+    expect(chargingFrameDelayMs(10000), kChargingDefaultDelayMs, reason: '10ms → floored');
+    // Below the floor — including the stock sidecar's 15ms, which is the
+    // loop's msleep and not a rate the hardware can sustain.
+    expect(chargingFrameDelayMs(15), kChargingDefaultDelayMs);
+    expect(chargingFrameDelayMs(1), kChargingDefaultDelayMs);
+    expect(kChargingMinDelayMs, lessThan(kChargingDefaultDelayMs));
   });
 }
