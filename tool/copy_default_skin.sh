@@ -42,6 +42,11 @@ done
 cp "$ONION_RES_DIR/toggle-on.png" "$DEST_DIR/skin/extra/toggle-on.png"
 cp "$ONION_RES_DIR/toggle-off.png" "$DEST_DIR/skin/extra/toggle-off.png"
 
+# Default charging animation (chargingState.c falls back to its res/
+# frames when the theme ships none — the purple glow battery loop).
+cp "$PACKAGE_DIR/../Onion/src/chargingState/res/chargingState"*.png "$DEST_DIR/skin/extra/"
+cp "$PACKAGE_DIR/../Onion/src/chargingState/res/chargingState.json" "$DEST_DIR/skin/extra/"
+
 # System fonts (non-CJK, non-.ttc — Flutter's font loader doesn't support
 # TrueType Collections). See plan.md §3/F3.
 cp "$ONION_APP_DIR/Exo-2-Bold-Italic.ttf" "$DEST_DIR/fonts/"

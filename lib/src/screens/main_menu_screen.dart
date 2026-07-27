@@ -139,6 +139,9 @@ class _MainMenuPainter extends CustomPainter {
   static const int _visibleSlots = 4;
   static const double _cardX0 = 10, _cardStride = 155, _cardScreenY = 66;
   static const double _cardCenterOffsetX = 78;
+  // Half of the reference card canvas height (Silky's 328): the slot's
+  // vertical anchor every theme's card canvas is centered on.
+  static const double _cardCanvasHalfHeight = 164;
   static const double _labelScreenCenterY = 288;
   static const double _dotStride = 28.5, _dotRowCenterX = 316, _dotScreenY = 390;
   static const double _contentTop = 60;
@@ -161,15 +164,35 @@ class _MainMenuPainter extends CustomPainter {
     final labelStyleSelected = OnionFontStyle(font: grid.font, size: grid.grid1x4, color: grid.selectedColor);
     final fontFamily = ctx.fontFamily(grid.font);
 
+    // MainUI's general blitting convention (proven by the battery/wifi
+    // measurements and by "big picture"-style themes whose focused card
+    // is larger than the screen): the asset's whole CANVAS is centered
+    // on the slot's fixed anchor. For Silky's 156x328 cards this lands
+    // exactly on the measured top-left (10+155·slot, 66); a 1104x500
+    // banner spills across the screen as its author intended. Cards are
+    // painted around the selection so the focused one lands last (on
+    // top) — oversized focused cards must cover their neighbours.
+    canvas.save();
+    canvas.clipRect(const Rect.fromLTWH(0, -_contentTop, 640, 480));
+    final slotOrder = List<int>.generate(visible, (s) => s)
+      ..sort((a, b) => (start + a == selected ? 1 : 0) - (start + b == selected ? 1 : 0));
+    for (final slot in slotOrder) {
+      final tabIndex = start + slot;
+      final tab = tabs[tabIndex];
+      final isSelected = tabIndex == selected;
+      final centerX = _cardX0 + _cardStride * slot + _cardCenterOffsetX;
+      const centerY = _cardScreenY + _cardCanvasHalfHeight - _contentTop;
+
+      final card = ctx.image(isSelected ? tab.focused : tab.normal) ?? ctx.image(tab.normal);
+      canvas.drawImageCentered(card, Offset(centerX, centerY));
+    }
+    canvas.restore();
+
     for (var slot = 0; slot < visible; slot++) {
       final tabIndex = start + slot;
       final tab = tabs[tabIndex];
       final isSelected = tabIndex == selected;
       final x = _cardX0 + _cardStride * slot;
-      const y = _cardScreenY - _contentTop;
-
-      final card = ctx.image(isSelected ? tab.focused : tab.normal) ?? ctx.image(tab.normal);
-      canvas.drawImageTopLeft(card, Offset(x, y));
 
       if (!hideLabels) {
         final painter = OnionCanvasOps.layoutOnionText(
@@ -191,10 +214,15 @@ class _MainMenuPainter extends CustomPainter {
     final dotNeutral = ctx.image(ThemeAsset.dotNeutral);
     if (dotActive == null && dotNeutral == null) return;
     final n = tabs.length;
-    final rowLeft = _dotRowCenterX - (n * _dotStride) / 2 + (_dotStride - 24) / 2;
+    // Same centered-canvas convention: each dot's canvas centered on its
+    // 28.5-stride slot (equals the old top-left math for Silky's 24x14).
+    final rowLeft = _dotRowCenterX - (n * _dotStride) / 2;
     for (var i = 0; i < n; i++) {
       final image = i == selected ? (dotActive ?? dotNeutral) : (dotNeutral ?? dotActive);
-      canvas.drawImageTopLeft(image, Offset((rowLeft + _dotStride * i).roundToDouble(), _dotScreenY - _contentTop));
+      canvas.drawImageCentered(
+        image,
+        Offset((rowLeft + _dotStride * i + _dotStride / 2).roundToDouble(), _dotScreenY + 7 - _contentTop),
+      );
     }
   }
 

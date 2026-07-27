@@ -202,12 +202,19 @@ class _ThemeListItemPainter extends CustomPainter {
       );
     }
 
-    if (selected) {
-      canvas.drawImageRegion(
+    if (selected && selectedBackground != null) {
+      // Full-canvas blit, vertically centered in the row band and
+      // clipped to the row's width — a theme's bar may be shorter than
+      // the 60px band (e.g. 640x56) and region-cropping would read past
+      // its bounds. Left-aligned horizontally: narrower surfaces (the
+      // 320px pop menu) show the bar's left portion, like the device.
+      canvas.save();
+      canvas.clipRect(Rect.fromLTWH(0, contentTop, width, bgHeight));
+      canvas.drawImageTopLeft(
         selectedBackground,
-        from: Rect.fromLTWH(0, 0, width, bgHeight),
-        to: Rect.fromLTWH(0, contentTop, width, bgHeight),
+        Offset(0, contentTop + (bgHeight - selectedBackground!.height) / 2),
       );
+      canvas.restore();
     }
 
     final centerY = contentTop + bgHeight / 2;

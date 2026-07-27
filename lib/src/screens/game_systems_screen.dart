@@ -163,7 +163,13 @@ class _GameSystemsPainter extends CustomPainter {
       final centerX = cardX + _cardCenterOffsetX;
       final isSelected = index == selected;
 
-      canvas.drawImageTopLeft(isSelected ? cardFocused : cardNormal, Offset(cardX, cardY));
+      // Centered-canvas convention (see main menu painter): the card
+      // asset's whole canvas centered on the cell anchor — identical to
+      // the measured top-left for Silky's 154x170.
+      canvas.drawImageCentered(
+        isSelected ? cardFocused : cardNormal,
+        Offset(centerX, cardY + _cardStrideY / 2),
+      );
 
       final icon = icons[index];
       if (icon != null) {
