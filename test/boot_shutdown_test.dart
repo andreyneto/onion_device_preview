@@ -72,19 +72,23 @@ void main() {
     expect(tester.widget<BootStyleScreen>(find.byType(BootStyleScreen)).background, isNot(normalArt));
   });
 
-  test('charging frame delay follows the sidecar, floored at the firmware default', () {
-    // No sidecar → the firmware's own default.
-    expect(chargingFrameDelayMs(null), kChargingDefaultDelayMs);
+  test('charging frame delay follows the sidecar, floored at the measured device rate', () {
+    // The floor is the device's real per-frame cost, measured on a Mini+:
+    // 2.28s per 24-frame cycle → 95ms/frame (spec §11.9).
+    // No sidecar → the firmware default (80ms), floored to what the
+    // hardware actually delivers.
+    expect(chargingFrameDelayMs(null), kChargingDeviceFloorMs);
     // Authored values above the floor are honored as-is.
     expect(chargingFrameDelayMs(500), 500);
-    expect(chargingFrameDelayMs(80), 80);
+    expect(chargingFrameDelayMs(120), 120);
     // 10000+ is microseconds, integer-divided (chargingState.c:130-131).
     expect(chargingFrameDelayMs(500000), 500);
-    expect(chargingFrameDelayMs(10000), kChargingDefaultDelayMs, reason: '10ms → floored');
+    expect(chargingFrameDelayMs(10000), kChargingDeviceFloorMs, reason: '10ms → floored');
     // Below the floor — including the stock sidecar's 15ms, which is the
     // loop's msleep and not a rate the hardware can sustain.
-    expect(chargingFrameDelayMs(15), kChargingDefaultDelayMs);
-    expect(chargingFrameDelayMs(1), kChargingDefaultDelayMs);
-    expect(kChargingMinDelayMs, lessThan(kChargingDefaultDelayMs));
+    expect(chargingFrameDelayMs(15), kChargingDeviceFloorMs);
+    expect(chargingFrameDelayMs(80), kChargingDeviceFloorMs);
+    expect(chargingFrameDelayMs(1), kChargingDeviceFloorMs);
+    expect(kChargingMinDelayMs, lessThan(kChargingDeviceFloorMs));
   });
 }

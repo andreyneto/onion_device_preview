@@ -31,31 +31,29 @@ class ChargingScreen extends StatefulWidget {
 const int kChargingMinDelayMs = 15;
 
 /// `frame_delay` when the sidecar is missing or unreadable
-/// (`chargingState.c:106`) — and the floor this preview actually uses;
-/// see [chargingFrameDelayMs].
+/// (`chargingState.c:106`).
 const int kChargingDefaultDelayMs = 80;
+
+/// The fastest frame period the device actually achieves — [MEAS-device]:
+/// the stock 24-frame animation (nominal `frame_delay` 15) measured at
+/// 2.28s per cycle averaged over 5 cycles on a Mini+ → 95ms/frame. This
+/// is the loop's real per-frame cost (a 640x480x32 blit + `SDL_Flip` on
+/// the Miyoo framebuffer, plus the 15ms `msleep`), which caps the rate
+/// regardless of what the sidecar asks for.
+const int kChargingDeviceFloorMs = 95;
 
 /// Frame delay in milliseconds for a `chargingState.json` `frame_delay` of
 /// [raw] (null when there's no sidecar or it doesn't parse).
 ///
 /// Follows `chargingState.c:126-137` — values of 10000 or more are
-/// microseconds, integer-divided — with one **deliberate deviation**: the
-/// floor is [kChargingDefaultDelayMs], not the firmware's
-/// [kChargingMinDelayMs].
-///
-/// Why: the stock sidecar asks for 15ms, but 15ms is just the loop's
-/// `msleep` — on the device each frame also costs a 640x480x32 blit plus
-/// an `SDL_Flip` on the Miyoo framebuffer, so the hardware never gets
-/// near 66fps and the real animation is visibly slower than a literal
-/// 15ms replay (confirmed by the user against their Mini+). 80ms is the
-/// firmware's own default when a theme ships frames without a sidecar,
-/// and the most common value among the themes that do ship one (25 of 67
-/// in the `Themes` repo), so it's the closest thing to an authored
-/// "intended" pace.
+/// microseconds, integer-divided — then applies the device's measured
+/// floor: the firmware loop renders as fast as it can once `frame_delay`
+/// falls below its real per-frame cost, so the effective period on
+/// hardware is `max(frame_delay, ~95ms)` ([kChargingDeviceFloorMs]).
+/// Themes asking for slower paces (500ms etc.) are honored as authored.
 int chargingFrameDelayMs(int? raw) {
-  if (raw == null) return kChargingDefaultDelayMs;
-  final ms = raw >= 10000 ? raw ~/ 1000 : raw;
-  return ms < kChargingDefaultDelayMs ? kChargingDefaultDelayMs : ms;
+  final ms = raw == null ? kChargingDefaultDelayMs : (raw >= 10000 ? raw ~/ 1000 : raw);
+  return ms < kChargingDeviceFloorMs ? kChargingDeviceFloorMs : ms;
 }
 
 class _ChargingScreenState extends State<ChargingScreen> {
