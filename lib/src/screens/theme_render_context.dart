@@ -2,6 +2,8 @@ import 'dart:ui' as ui;
 
 import '../core/asset_resolver.dart';
 import '../core/font_loader.dart';
+import '../core/icon_pack.dart';
+import '../core/mock_data.dart';
 import '../core/theme_bundle.dart';
 import '../core/theme_config.dart';
 
@@ -17,16 +19,25 @@ class ThemeRenderContext {
     required this.config,
     required Map<ThemeAsset, ui.Image?> images,
     required Map<String, String> fontFamilies,
+    Map<String, ResolvedIcon> packIcons = const {},
+    Map<String, ResolvedIcon> selectedPackIcons = const {},
+    this.packIconSources = const {},
     this.assetsFoundInTheme = const {},
     this.assetsFromDefaultSkin = const {},
     this.assetsMissing = const {},
     this.fontsFailed = const {},
+    this.themeHasIconPack = false,
+    this.appliedThemeIcons = true,
   })  : _images = images,
-        _fontFamilies = fontFamilies;
+        _fontFamilies = fontFamilies,
+        _packIcons = packIcons,
+        _selectedPackIcons = selectedPackIcons;
 
   final OnionThemeConfig config;
   final Map<ThemeAsset, ui.Image?> _images;
   final Map<String, String> _fontFamilies;
+  final Map<String, ResolvedIcon> _packIcons;
+  final Map<String, ResolvedIcon> _selectedPackIcons;
 
   /// Assets found in the loaded theme's own zip.
   final Set<ThemeAsset> assetsFoundInTheme;
@@ -41,7 +52,26 @@ class ThemeRenderContext {
   /// (missing from the zip, a `.ttc`, or a decode error).
   final Set<String> fontsFailed;
 
+  /// Whether the loaded theme ships an `icons/` pack of its own.
+  final bool themeHasIconPack;
+
+  /// Whether the theme's own icon pack was applied when resolving (see
+  /// [IconPackResolver.applyThemeIcons]).
+  final bool appliedThemeIcons;
+
   ui.Image? image(ThemeAsset asset) => _images[asset];
+
+  /// A resolved icon-pack icon (see [IconPackResolver]) — the console
+  /// icons on the Game Systems grid and the app icons in the Apps list.
+  /// [selected] picks the pack's `sel/` variant when it has one (falling
+  /// back to the normal icon, like the device).
+  ui.Image? packIcon(String name, {bool selected = false}) =>
+      (selected ? _selectedPackIcons[name] : _packIcons[name])?.image;
+
+  /// Where each icon-pack lookup landed, keyed by the pack-relative path
+  /// that served it (e.g. `app/retroarch`, `sel/gba`) — for
+  /// `ThemeInspector`.
+  final Map<String, IconPackSource> packIconSources;
 
   /// The Flutter font family resolved for a `config.json` font path
   /// (e.g. `config.title.font`). Falls back to the package's default
@@ -52,18 +82,32 @@ class ThemeRenderContext {
   /// the Flutter font family actually used for it.
   Map<String, String> get fontFamiliesByPath => Map.unmodifiable(_fontFamilies);
 
-  /// Resolves every asset in [assets] (defaults to all of [ThemeAsset])
-  /// and every distinct font path the config references, against
-  /// [bundle]. Callers rendering a single screen should pass just the
-  /// assets that screen needs, to avoid decoding the whole skin.
-  static Future<ThemeRenderContext> resolve(OnionThemeBundle bundle, {Iterable<ThemeAsset>? assets}) async {
+  /// Resolves every asset in [assets] (defaults to all of [ThemeAsset]),
+  /// every icon-pack icon the mock references, and every distinct font
+  /// path the config uses, against [bundle]. Callers rendering a single
+  /// screen should pass just the assets that screen needs, to avoid
+  /// decoding the whole skin. [applyThemeIcons] mirrors ThemeSwitcher's
+  /// install-time "apply icons" choice (see [IconPackResolver]).
+  static Future<ThemeRenderContext> resolve(
+    OnionThemeBundle bundle, {
+    Iterable<ThemeAsset>? assets,
+    bool applyThemeIcons = true,
+  }) async {
     final assetResolver = AssetResolver(bundle);
     final fontResolver = OnionFontResolver(bundle);
+    final iconResolver = IconPackResolver(bundle, applyThemeIcons: applyThemeIcons);
     final config = bundle.config;
 
     final images = <ThemeAsset, ui.Image?>{};
     for (final asset in assets ?? ThemeAsset.values) {
       images[asset] = await assetResolver.resolve(asset);
+    }
+
+    final packIcons = <String, ResolvedIcon>{};
+    final selectedPackIcons = <String, ResolvedIcon>{};
+    for (final name in OnionMockData.iconPackNames) {
+      packIcons[name] = await iconResolver.resolve(name);
+      selectedPackIcons[name] = await iconResolver.resolve(name, selected: true);
     }
 
     final fontPaths = <String>{
@@ -82,6 +126,11 @@ class ThemeRenderContext {
       config: config,
       images: images,
       fontFamilies: fontFamilies,
+      packIcons: packIcons,
+      selectedPackIcons: selectedPackIcons,
+      packIconSources: iconResolver.sources,
+      themeHasIconPack: iconResolver.themeHasIconPack,
+      appliedThemeIcons: applyThemeIcons,
       assetsFoundInTheme: assetResolver.foundInTheme,
       assetsFromDefaultSkin: assetResolver.foundInDefault,
       assetsMissing: assetResolver.missing,

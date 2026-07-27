@@ -120,7 +120,7 @@ class AssetResolver {
     // A file the theme ships but that fails to decode (truncated/corrupt
     // PNG) falls through to the default skin instead of aborting the
     // whole theme load — one broken file shouldn't kill the preview.
-    final themeImage = await _tryDecode(bundle[asset.skinPath]);
+    final themeImage = await _tryDecode(themeBytesAt(asset.skinPath));
     if (themeImage != null) {
       _foundInTheme.add(asset);
       return _cache[asset] = themeImage;
@@ -150,8 +150,20 @@ class AssetResolver {
   /// [resolve]) since callers using this are already doing their own
   /// one-off loading of a variable set of paths.
   Future<ui.Image?> resolveImageAt(String relativePath) async {
-    return _tryDecode(await resolveBytesAt(relativePath));
+    return decode(await resolveBytesAt(relativePath));
   }
+
+  /// A theme-root-relative file straight out of the loaded zip, without
+  /// any fallback — for callers that need to know *where* a file came
+  /// from (see `IconPackResolver`, which reports per-icon provenance).
+  Uint8List? themeBytesAt(String relativePath) => bundle[relativePath];
+
+  /// The same path in the package's bundled default skin, or `null`.
+  static Future<Uint8List?> defaultSkinBytesAt(String relativePath) => _loadDefaultSkinBytes(relativePath);
+
+  /// Decodes image [bytes], yielding `null` for `null` or undecodable
+  /// input rather than throwing — one corrupt file shouldn't abort a load.
+  static Future<ui.Image?> decode(Uint8List? bytes) => _tryDecode(bytes);
 
   static Future<Uint8List?> _loadDefaultSkinBytes(String relativePath) async {
     try {

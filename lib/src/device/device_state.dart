@@ -79,7 +79,7 @@ class OnionPreviewController extends ChangeNotifier {
     _themeLoadError = null;
     notifyListeners();
     try {
-      final context = await ThemeRenderContext.resolve(theme);
+      final context = await ThemeRenderContext.resolve(theme, applyThemeIcons: _applyThemeIcons);
       if (token != _themeLoadToken) return false;
       _theme = theme;
       _renderContext = context;
@@ -97,6 +97,24 @@ class OnionPreviewController extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  // --- Icon pack ---
+  //
+  // A theme zip may ship an `icons/` pack (68 of the ~250 community
+  // themes do) that replaces the SD's console/app icons. Installing it is
+  // a separate, opt-out choice on the device (ThemeSwitcher's "apply
+  // icons", on by default — `themeSwitcher.c:284-311`), so it's a control
+  // here too. Since resolution happens once per theme load, flipping this
+  // re-runs the load — the same "reinstall the theme" the device does.
+
+  bool _applyThemeIcons = true;
+  bool get applyThemeIcons => _applyThemeIcons;
+
+  Future<void> setApplyThemeIcons(bool value) async {
+    if (_applyThemeIcons == value) return;
+    _applyThemeIcons = value;
+    await loadTheme(_theme);
   }
 
   // --- Navigation stack ---

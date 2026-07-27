@@ -28,13 +28,19 @@ mkdir -p "$DEST_DIR/sound"
 cp "$ONION_APP_DIR/sound/bgm.mp3" "$DEST_DIR/sound/"
 cp "$ONION_APP_DIR/sound/change.wav" "$DEST_DIR/sound/"
 
-# Console icons for the Game Systems grid (the device serves these from
-# the SD's Icons pack; themes may override via their own icons/ dir).
-# Only the ones the mock's systems reference.
+# The bundled "Default" icon pack — the device serves these from
+# /mnt/SDCARD/Icons/<pack>/ and a theme's own icons/ dir replaces them
+# (installTheme.h:205-210 applies the theme's pack with reset_default,
+# i.e. per-icon fallback to Default). Layout mirrors apply_icons.h:104-130:
+# <pack>/<name>.png for systems, <pack>/app/<name>.png for apps.
+# Only the ones the mock references.
 ICONS_DIR="$PACKAGE_DIR/../Onion/static/build/Icons/Default"
-mkdir -p "$DEST_DIR/icons"
+mkdir -p "$DEST_DIR/icons/app"
 for icon in search gba sfc ps md gb gbc neogeo arcade; do
   cp "$ICONS_DIR/$icon.png" "$DEST_DIR/icons/"
+done
+for icon in retroarch commander battery_monitor ereader tweaks gameswitcher; do
+  cp "$ICONS_DIR/app/$icon.png" "$DEST_DIR/icons/app/"
 done
 
 # System-resource fallback assets the firmware serves from

@@ -20,6 +20,9 @@ library onion_device_preview;
 
 export 'src/core/asset_resolver.dart' show ThemeAsset, batteryAssetFor;
 export 'src/core/font_loader.dart' show kBundledSystemFontFamilies, kOnionFallbackFontFamily;
+// `IconPackResolver` itself stays internal (like `AssetResolver`), but its
+// result types surface through `ThemeRenderContext.packIconSources`.
+export 'src/core/icon_pack.dart' show IconPackSource, ResolvedIcon;
 export 'src/core/mock_data.dart';
 export 'src/core/theme_bundle.dart';
 export 'src/core/theme_config.dart';

@@ -173,6 +173,13 @@ class OnionThemeBundle {
     return _files[key];
   }
 
+  /// Whether the active root contains any file under [relativePrefix]
+  /// (e.g. `'icons/'` — whether the theme ships an icon pack at all).
+  bool hasFilesUnder(String relativePrefix) {
+    final prefix = _activeRootPath.isEmpty ? relativePrefix : '$_activeRootPath$relativePrefix';
+    return _files.keys.any((path) => path.startsWith(prefix));
+  }
+
   static List<ThemeRootInfo> _findThemeRoots(Map<String, Uint8List> files) {
     final candidates = <String>{''};
     for (final path in files.keys) {

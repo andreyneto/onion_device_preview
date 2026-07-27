@@ -8,11 +8,10 @@ class OnionMockSystem {
   final String name;
   final List<OnionMockRom> roms;
 
-  /// Console icon path relative to the theme root — the device serves
-  /// these from the SD's Icons pack, and a theme zip can override them
-  /// with its own `icons/` dir; the bundled default skin ships the ones
-  /// the mock references.
-  String get iconPath => 'icons/$id.png';
+  /// This system's icon-pack name (see `IconPackResolver`): the id
+  /// doubles as the icon filename, exactly like the `Emu/*/config.json`
+  /// entries the device reads (`icon: ../../Icons/Default/gba.png`).
+  String get iconName => id;
 }
 
 class OnionMockRom {
@@ -24,47 +23,75 @@ class OnionMockRom {
 }
 
 class OnionMockApp {
-  const OnionMockApp(this.name);
+  const OnionMockApp(this.name, this.iconName);
 
   final String name;
+
+  /// Icon-pack name under the pack's `app/` sub-tree
+  /// (`apply_icons.h:104-116`), e.g. `app/retroarch`.
+  final String iconName;
 }
 
 /// A node in the mocked Settings/Tweaks tree, exercising the same item
 /// kinds the firmware's list renderer supports (`render/list.h`): a plain
 /// row, a toggle, a left/right multivalue picker, and a submenu.
 ///
-/// [iconSkinName] names a themable leading icon from the skin (e.g.
-/// `icon-brightness-48` → `skin/icon-brightness-48.png`), like the real
-/// Settings menu shows (MainUI_012 reference screenshot); `null` renders
-/// the row without one.
+/// A row's leading icon comes from one of two different places, matching
+/// the device:
+///
+/// * [iconSkinName] — a themable icon out of the **skin** (e.g.
+///   `icon-brightness-48` → `skin/icon-brightness-48.png`), which is what
+///   the real Settings menu draws (MainUI_012 reference screenshot).
+/// * [iconPackName] — an **icon pack** name (`IconPackResolver`), which is
+///   what the Apps list draws, since each `App/*/config.json` points at
+///   `Icons/<pack>/app/<name>.png`.
+///
+/// `null` on both renders the row without an icon.
 sealed class OnionMockSettingsItem {
-  const OnionMockSettingsItem(this.label, {this.iconSkinName});
+  const OnionMockSettingsItem(this.label, {this.iconSkinName, this.iconPackName});
 
   final String label;
   final String? iconSkinName;
+  final String? iconPackName;
 }
 
 class OnionMockSimpleItem extends OnionMockSettingsItem {
-  const OnionMockSimpleItem(super.label, {this.description, super.iconSkinName});
+  const OnionMockSimpleItem(
+    super.label, {
+    this.description,
+    this.large = false,
+    super.iconSkinName,
+    super.iconPackName,
+  });
 
   final String? description;
+
+  /// Forces the taller 90px `bg-list-l` row even without a description —
+  /// the Apps list's row style (`docs/guide.txt`, "Apps" → `bg-list-l`).
+  final bool large;
 }
 
 class OnionMockToggleItem extends OnionMockSettingsItem {
-  const OnionMockToggleItem(super.label, {this.value = false, super.iconSkinName});
+  const OnionMockToggleItem(super.label, {this.value = false, super.iconSkinName, super.iconPackName});
 
   final bool value;
 }
 
 class OnionMockMultiValueItem extends OnionMockSettingsItem {
-  const OnionMockMultiValueItem(super.label, {required this.options, this.selectedIndex = 0, super.iconSkinName});
+  const OnionMockMultiValueItem(
+    super.label, {
+    required this.options,
+    this.selectedIndex = 0,
+    super.iconSkinName,
+    super.iconPackName,
+  });
 
   final List<String> options;
   final int selectedIndex;
 }
 
 class OnionMockSubmenuItem extends OnionMockSettingsItem {
-  const OnionMockSubmenuItem(super.label, {required this.children, super.iconSkinName});
+  const OnionMockSubmenuItem(super.label, {required this.children, super.iconSkinName, super.iconPackName});
 
   final List<OnionMockSettingsItem> children;
 }
@@ -119,14 +146,25 @@ class OnionMockData {
     OnionMockSystem(id: 'arcade', name: 'Arcade', roms: _romsFor('ARC')),
   ];
 
+  /// Labels and icon names taken from the real `App/*/config.json`
+  /// packages the firmware ships (`Onion/static/packages/App`), so a
+  /// theme's own `icons/app/` overrides land on the names it expects.
   static const List<OnionMockApp> apps = [
-    OnionMockApp('RetroArch'),
-    OnionMockApp('File Explorer'),
-    OnionMockApp('Battery Monitor'),
-    OnionMockApp('Ebook Reader'),
-    OnionMockApp('Simple Menu'),
-    OnionMockApp('Terminal'),
+    OnionMockApp('RetroArch', 'app/retroarch'),
+    OnionMockApp('File Explorer', 'app/commander'),
+    OnionMockApp('GameSwitcher', 'app/gameswitcher'),
+    OnionMockApp('Battery Monitor', 'app/battery_monitor'),
+    OnionMockApp('Ebook Reader', 'app/ereader'),
+    OnionMockApp('Tweaks', 'app/tweaks'),
   ];
+
+  /// Every icon-pack name the preview's screens can ask for, resolved up
+  /// front by `ThemeRenderContext` so painters stay synchronous.
+  static List<String> get iconPackNames => [
+        'search',
+        for (final system in gameSystems) system.iconName,
+        for (final app in apps) app.iconName,
+      ];
 
   static List<OnionMockRom> get recentRoms =>
       gameSystems.expand((s) => s.roms).where((r) => r.isRecent).toList();

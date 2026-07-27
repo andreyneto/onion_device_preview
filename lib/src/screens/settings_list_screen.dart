@@ -135,7 +135,17 @@ class _SettingsListScreenState extends State<SettingsListScreen> {
   }
 
   static bool _isLarge(OnionMockSettingsItem item) =>
-      item is OnionMockSimpleItem && (item.description?.isNotEmpty ?? false);
+      item is OnionMockSimpleItem && (item.large || (item.description?.isNotEmpty ?? false));
+
+  /// A row's leading icon: Settings rows use a themable *skin* icon,
+  /// Apps rows an *icon pack* icon (whose focused variant may differ —
+  /// the device's `iconsel`). See [OnionMockSettingsItem].
+  ui.Image? _iconFor(OnionMockSettingsItem item, bool selected) {
+    final packName = item.iconPackName;
+    if (packName != null) return widget.ctx.packIcon(packName, selected: selected);
+    final skinName = item.iconSkinName;
+    return skinName == null ? null : _icons[skinName];
+  }
 
   Widget _row(OnionMockSettingsItem item, bool selected) {
     final large = _isLarge(item);
@@ -159,7 +169,7 @@ class _SettingsListScreenState extends State<SettingsListScreen> {
       large: large,
       selected: selected,
       selectedBackground: widget.ctx.image(large ? ThemeAsset.bgListLarge : ThemeAsset.bgListSmall),
-      icon: item.iconSkinName == null ? null : _icons[item.iconSkinName!],
+      icon: _iconFor(item, selected),
       label: label,
       description: item is OnionMockSimpleItem ? item.description : null,
       listStyle: widget.ctx.config.list,

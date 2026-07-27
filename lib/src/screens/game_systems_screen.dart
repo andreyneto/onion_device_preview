@@ -43,14 +43,11 @@ class GameSystemsScreen extends StatefulWidget {
 }
 
 class _GameSystemsScreenState extends State<GameSystemsScreen> {
-  Map<String, ui.Image?>? _icons;
-
   @override
   void initState() {
     super.initState();
     widget.controller.bindScreenHandlers(OnionScreenKind.gameSystems, onConfirm: _activate);
     widget.controller.setGridColumns(OnionScreenKind.gameSystems, GameSystemsScreen.columns);
-    _loadIcons();
   }
 
   @override
@@ -58,20 +55,6 @@ class _GameSystemsScreenState extends State<GameSystemsScreen> {
     widget.controller.unbindScreenHandlers(OnionScreenKind.gameSystems);
     widget.controller.setGridColumns(OnionScreenKind.gameSystems, null);
     super.dispose();
-  }
-
-  /// Console icons live outside the fixed [ThemeAsset] set (their names
-  /// depend on the systems shown), so they're resolved on demand through
-  /// the same theme-zip → default-skin chain, like the charging frames.
-  Future<void> _loadIcons() async {
-    final resolver = AssetResolver(widget.controller.theme);
-    final icons = <String, ui.Image?>{
-      'icons/search.png': await resolver.resolveImageAt('icons/search.png'),
-    };
-    for (final system in OnionMockData.gameSystems) {
-      icons[system.iconPath] = await resolver.resolveImageAt(system.iconPath);
-    }
-    if (mounted) setState(() => _icons = icons);
   }
 
   int get _activeIndex =>
@@ -95,14 +78,20 @@ class _GameSystemsScreenState extends State<GameSystemsScreen> {
     widget.controller.setColumnCount(OnionScreenKind.gameSystems, GameSystemsScreen.cellCount);
 
     final labels = <String>['Search', for (final s in OnionMockData.gameSystems) s.name];
-    final iconPaths = <String>['icons/search.png', for (final s in OnionMockData.gameSystems) s.iconPath];
+    final iconNames = <String>['search', for (final s in OnionMockData.gameSystems) s.iconName];
+    final selected = _activeIndex;
 
     return CustomPaint(
       size: const Size(640, 360),
       painter: _GameSystemsPainter(
         labels: labels,
-        icons: [for (final path in iconPaths) _icons?[path]],
-        selected: _activeIndex,
+        // Icons come from the icon pack, not the skin, and the focused
+        // cell gets the pack's `sel/` variant when it ships one (the
+        // device's `iconsel`) — see IconPackResolver.
+        icons: [
+          for (var i = 0; i < iconNames.length; i++) widget.ctx.packIcon(iconNames[i], selected: i == selected),
+        ],
+        selected: selected,
         cardNormal: widget.ctx.image(ThemeAsset.bgGameItemNormal),
         cardFocused: widget.ctx.image(ThemeAsset.bgGameItemFocused),
         fontFamily: widget.ctx.fontFamily(widget.ctx.config.grid.font),

@@ -356,6 +356,17 @@ class _ControlPanel extends StatelessWidget {
                 },
               ),
             ],
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Aplicar ícones do tema'),
+              subtitle: Text(
+                controller.renderContext?.themeHasIconPack ?? false
+                    ? 'o tema traz icons/ — como no ThemeSwitcher do device'
+                    : 'o tema não traz icons/ (usa o pack Default)',
+              ),
+              value: controller.applyThemeIcons,
+              onChanged: (v) => controller.setApplyThemeIcons(v),
+            ),
             const Divider(height: 32),
             Text('Tela', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),

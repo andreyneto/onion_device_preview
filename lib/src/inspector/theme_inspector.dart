@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../core/asset_resolver.dart';
+import '../core/icon_pack.dart';
 import '../core/theme_config.dart';
 import '../device/device_state.dart';
 import '../screens/theme_render_context.dart';
@@ -60,6 +61,10 @@ class ThemeInspector extends StatelessWidget {
                     title: 'Assets — ausentes (${ctx.assetsMissing.length})',
                     initiallyExpanded: ctx.assetsMissing.isNotEmpty,
                     child: _assetList(ctx.assetsMissing, _Palette.bad),
+                  ),
+                  _Section(
+                    title: 'Ícones (pack) — ${_iconPackSummary(ctx)}',
+                    child: _iconPackList(ctx),
                   ),
                   _Section(title: 'Fontes', initiallyExpanded: true, child: _fontTable(ctx)),
                 ],
@@ -171,23 +176,58 @@ class ThemeInspector extends StatelessWidget {
 
   // --- Assets / fonts ---
 
+  // --- Icon pack ---
+  //
+  // Icons are a pack, not part of the skin (see IconPackResolver): the
+  // theme's own `icons/` dir replaces the SD's, per-icon, and only when
+  // "aplicar ícones" is on.
+
+  String _iconPackSummary(ThemeRenderContext ctx) {
+    if (!ctx.themeHasIconPack) return 'o tema não traz icons/';
+    if (!ctx.appliedThemeIcons) return 'tema traz icons/, não aplicado';
+    final fromTheme = ctx.packIconSources.values.where((s) => s == IconPackSource.theme).length;
+    return '$fromTheme do tema';
+  }
+
+  Widget _iconPackList(ThemeRenderContext ctx) {
+    final sources = ctx.packIconSources;
+    if (sources.isEmpty) return const Text('(nenhum)', style: TextStyle(color: _Palette.dim));
+    final names = sources.keys.toList()..sort();
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        for (final name in names)
+          _chip(
+            name,
+            switch (sources[name]!) {
+              IconPackSource.theme => _Palette.good,
+              IconPackSource.defaultPack => _Palette.dim,
+              IconPackSource.missing => _Palette.bad,
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _chip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: _Palette.chip,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 11, color: color)),
+    );
+  }
+
   Widget _assetList(Set<ThemeAsset> assets, Color color) {
     if (assets.isEmpty) return const Text('(nenhum)', style: TextStyle(color: _Palette.dim));
     final names = assets.map((a) => a.logicalName).toList()..sort();
     return Wrap(
       spacing: 6,
       runSpacing: 4,
-      children: [
-        for (final name in names)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            decoration: BoxDecoration(
-              color: _Palette.chip,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(name, style: TextStyle(fontSize: 11, color: color)),
-          ),
-      ],
+      children: [for (final name in names) _chip(name, color)],
     );
   }
 

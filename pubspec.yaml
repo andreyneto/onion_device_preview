@@ -30,6 +30,7 @@ flutter:
     - assets/default_skin/fonts/
     - assets/default_skin/sound/
     - assets/default_skin/icons/
+    - assets/default_skin/icons/app/
   fonts:
     - family: Exo 2 Bold Italic
       fonts:

@@ -91,5 +91,20 @@ void main() {
     await stage(() async =>
         controller.showDialog(title: 'Confirmação', message: 'Um diálogo de exemplo.', showHint: true));
     await expectLater(screen, matchesGoldenFile('goldens/dialog.png'));
+
+    // Apps: tall bg-list-l rows with icon-pack icons (icons/app/<name>),
+    // served here by the bundled Default pack.
+    await stage(() async {
+      controller.goBack();
+      controller.resetTo(OnionScreenKind.mainMenu);
+      controller.openSettingsTree(
+        [
+          for (final app in OnionMockData.apps)
+            OnionMockSimpleItem(app.name, large: true, iconPackName: app.iconName),
+        ],
+        'Apps',
+      );
+    });
+    await expectLater(screen, matchesGoldenFile('goldens/apps.png'));
   });
 }
