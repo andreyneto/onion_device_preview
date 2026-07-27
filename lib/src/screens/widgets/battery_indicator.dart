@@ -44,6 +44,35 @@ class BatteryIndicator extends StatelessWidget {
     return CustomPaint(size: layout.size, painter: _BatteryPainter(layout));
   }
 
+  /// Paints the composite with its whole canvas centered on [center] —
+  /// exactly how the header blits it (`header.h:19`, and
+  /// `theme_renderHeaderBatteryCustom` for a custom bar's height).
+  ///
+  /// Callers that draw the status bar by hand must go through this rather
+  /// than placing icon and text independently: the percentage's position
+  /// is defined *inside* the composite (`offsetX` is relative to the
+  /// canvas's left edge, not to the anchor), so centering the text on the
+  /// anchor gets it wrong for any theme with a non-zero `offsetX` — stock
+  /// Silky's 26 put it 26px too far right. See spec §11.13.
+  static void paintCenteredAt(
+    Canvas canvas,
+    Offset center, {
+    required ui.Image? icon,
+    required int percentage,
+    required bool charging,
+    required OnionBatteryPercentage style,
+    required String fontFamily,
+  }) {
+    final layout = _BatteryLayout.compute(
+      icon: icon,
+      percentage: percentage,
+      charging: charging,
+      style: style,
+      fontFamily: fontFamily,
+    );
+    layout.paintAt(canvas, center - Offset(layout.size.width / 2, layout.size.height / 2));
+  }
+
   /// The composite's total width for the given inputs, so siblings (the
   /// header's wifi icon) can position themselves relative to its left
   /// edge without rebuilding the layout math.
@@ -162,6 +191,14 @@ class _BatteryLayout {
       textOffset: textOffset,
     );
   }
+
+  /// Draws the composite with its top-left corner at [origin].
+  void paintAt(Canvas canvas, Offset origin) {
+    canvas.drawImageTopLeft(icon, origin + iconOffset);
+    if (textPainter != null && textOffset != null) {
+      textPainter!.paint(canvas, origin + textOffset!);
+    }
+  }
 }
 
 class _BatteryPainter extends CustomPainter {
@@ -170,12 +207,7 @@ class _BatteryPainter extends CustomPainter {
   final _BatteryLayout layout;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawImageTopLeft(layout.icon, layout.iconOffset);
-    if (layout.textPainter != null && layout.textOffset != null) {
-      layout.textPainter!.paint(canvas, layout.textOffset!);
-    }
-  }
+  void paint(Canvas canvas, Size size) => layout.paintAt(canvas, Offset.zero);
 
   @override
   bool shouldRepaint(covariant _BatteryPainter oldDelegate) {

@@ -31,6 +31,7 @@ class ThemeListItem extends StatelessWidget {
     this.dividerImage,
     this.selectedBackground,
     this.icon,
+    this.fixedIconColumn = false,
     required this.label,
     this.description,
     required this.listStyle,
@@ -62,6 +63,10 @@ class ThemeListItem extends StatelessWidget {
   final ui.Image? dividerImage;
   final ui.Image? selectedBackground;
   final ui.Image? icon;
+
+  /// Start the label at a fixed x instead of after the icon — what the
+  /// device's Settings menu does. See the constant in the painter.
+  final bool fixedIconColumn;
 
   final String label;
   final String? description;
@@ -110,6 +115,7 @@ class ThemeListItem extends StatelessWidget {
           dividerImage: dividerImage,
           selectedBackground: selectedBackground,
           icon: icon,
+          fixedIconColumn: fixedIconColumn,
           label: label,
           description: description,
           listStyle: listStyle,
@@ -142,6 +148,7 @@ class _ThemeListItemPainter extends CustomPainter {
     required this.dividerImage,
     required this.selectedBackground,
     required this.icon,
+    required this.fixedIconColumn,
     required this.label,
     required this.description,
     required this.listStyle,
@@ -168,6 +175,7 @@ class _ThemeListItemPainter extends CustomPainter {
   final ui.Image? dividerImage;
   final ui.Image? selectedBackground;
   final ui.Image? icon;
+  final bool fixedIconColumn;
   final String label;
   final String? description;
   final OnionFontStyle listStyle;
@@ -184,6 +192,19 @@ class _ThemeListItemPainter extends CustomPainter {
 
   static const double _edgeMargin = 20;
   static const double _iconGap = 17;
+
+  /// Where the label starts on a Settings row [MEAS-device].
+  ///
+  /// `list.h:132-137` advances the pen by the icon's own width
+  /// (`offset_x += icon->w + 17`), and that is what the Apps list does —
+  /// verified against MainUI_013 with its 74px pack icons (spec §12.3).
+  /// The Settings menu does *not*: cross-correlating each label against
+  /// MainUI_012 puts the pen on 80 in every row while the icon widths
+  /// vary 46–48, so it can't be icon-relative there. MainUI is closed, so
+  /// the two lists are presumably separate code paths; the discriminator
+  /// we can see from outside is which icon source the row uses. See spec
+  /// §11.12.
+  static const double _skinIconColumnEnd = 80;
 
   // Multivalue geometry [MEAS-device] (MainUI_012, Brightness row): the
   // 24px arrow canvases sit at x=352 and x=576 on a 640 row (i.e. the
@@ -223,7 +244,7 @@ class _ThemeListItemPainter extends CustomPainter {
     var offsetX = _edgeMargin;
     if (icon != null) {
       canvas.drawImageTopLeft(icon, Offset(offsetX, centerY - icon!.height / 2));
-      offsetX += icon!.width + _iconGap;
+      offsetX = fixedIconColumn ? _skinIconColumnEnd : offsetX + icon!.width + _iconGap;
     }
 
     var labelEnd = width;
@@ -327,6 +348,7 @@ class _ThemeListItemPainter extends CustomPainter {
         oldDelegate.toggleOn != toggleOn ||
         oldDelegate.multivalueText != multivalueText ||
         oldDelegate.trailingMark != trailingMark ||
+        oldDelegate.fixedIconColumn != fixedIconColumn ||
         // Images can arrive after the first paint (async icon loads) —
         // skipping them here freezes the row on its icon-less frame.
         oldDelegate.icon != icon ||

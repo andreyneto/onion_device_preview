@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart';
 
 import '../../core/theme_config.dart';
+import 'battery_indicator.dart';
 import 'onion_canvas.dart';
 
 /// The top-bar status indicators — battery icon + percentage and wifi —
@@ -97,33 +98,19 @@ class _StatusIndicatorsPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(const Rect.fromLTWH(0, 0, 640, 480));
     canvas.drawImageCentered(wifiIcon, _wifiCenter);
-    canvas.drawImageCentered(batteryIcon, batteryCenter);
-    canvas.restore();
-
-    // "Currently charging, hide text" (battery.h:28-29).
-    if (!batteryStyle.visible || charging) return;
-
-    final style = OnionFontStyle(
-      font: batteryStyle.font,
+    BatteryIndicator.paintCenteredAt(
+      canvas,
+      batteryCenter,
+      icon: batteryIcon,
+      percentage: batteryPercentage,
+      charging: charging,
       // MainUI's top bar draws the percentage at ~18px unless the theme
       // explicitly sizes it; the config default of 24 belongs to the
       // apps-side battery composite (battery.h), not this bar.
-      size: batteryStyle.sizeExplicit ? batteryStyle.size : _defaultTextSize,
-      color: batteryStyle.color,
+      style: batteryStyle.sizeExplicit ? batteryStyle : batteryStyle.copyWith(size: _defaultTextSize),
+      fontFamily: batteryFontFamily,
     );
-    final painter = OnionCanvasOps.layoutOnionText('$batteryPercentage%', style: style, fontFamily: batteryFontFamily);
-    var offsetY = batteryStyle.offsetY.toDouble();
-    if (batteryFontFamily.contains('Exo 2')) {
-      // Same optical correction the firmware applies (battery.h:34-36).
-      offsetY -= 0.075 * painter.height;
-    }
-    painter.paint(
-      canvas,
-      Offset(
-        batteryCenter.dx - painter.width / 2 + batteryStyle.offsetX,
-        batteryCenter.dy - painter.height / 2 + offsetY,
-      ),
-    );
+    canvas.restore();
   }
 
   @override

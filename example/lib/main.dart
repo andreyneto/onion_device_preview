@@ -488,6 +488,13 @@ class _ControlPanel extends StatelessWidget {
               value: controller.soundEnabled,
               onChanged: controller.setSoundEnabled,
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Histórico vazio (Game Switcher)'),
+              subtitle: const Text('mostra a arte Empty, como no primeiro boot'),
+              value: controller.gsHistoryEmpty,
+              onChanged: controller.setGsHistoryEmpty,
+            ),
             const SizedBox(height: 8),
             Text('Labels (tabs e hints)', style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 4),

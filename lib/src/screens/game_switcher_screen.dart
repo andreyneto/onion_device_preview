@@ -217,7 +217,10 @@ class _GameSwitcherScreenState extends State<GameSwitcherScreen> {
         Positioned.fill(
           child: CustomPaint(
             painter: _GameSwitcherPainter(
-              romScreen: _romScreens[controller.gsIndex],
+              // No history → no screenshot at all, so the painter falls
+              // through to the centered `Empty` art. Keyed off the games
+              // list rather than the cache, which outlives the state.
+              romScreen: controller.gsGames.isEmpty ? null : _romScreens[controller.gsIndex],
               frame: ctx.config.frame,
               view: view,
               footerHeight: footerHeight,

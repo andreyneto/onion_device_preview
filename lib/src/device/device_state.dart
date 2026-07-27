@@ -296,7 +296,23 @@ class OnionPreviewController extends ChangeNotifier {
   /// Selected save-state slot, shown in the pop menu's "Load" preview.
   int get gsSaveSlot => _gsSaveSlot;
 
-  List<OnionMockSwitcherGame> get gsGames => OnionMockData.switcherGames;
+  List<OnionMockSwitcherGame> get gsGames => _gsHistoryEmpty ? const [] : OnionMockData.switcherGames;
+
+  bool _gsHistoryEmpty = false;
+
+  /// Whether the switcher's history is empty — the state the device shows
+  /// as the centered `Empty` art (`gameSwitcher.c:112-117`). Worth being
+  /// reachable: it's the switcher's first-run screen, and the only one
+  /// where no game name, arrows or screenshot are drawn.
+  bool get gsHistoryEmpty => _gsHistoryEmpty;
+
+  void setGsHistoryEmpty(bool value) {
+    if (_gsHistoryEmpty == value) return;
+    _gsHistoryEmpty = value;
+    _gsIndex = 0;
+    _gsSaveSlot = 0;
+    notifyListeners();
+  }
 
   /// Opens the switcher (what Menu does on every screen).
   void openGameSwitcher() {

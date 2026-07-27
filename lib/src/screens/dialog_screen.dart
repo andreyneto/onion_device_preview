@@ -123,6 +123,9 @@ class _DialogPainter extends CustomPainter {
 
   static const _dialogWidth = 450.0;
 
+  /// `textbox.h:39` — `line_height = 1.2 * TTF_FontLineSkip(font)`.
+  static const _lineHeightFactor = 1.2;
+
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0x55000000));
@@ -143,10 +146,24 @@ class _DialogPainter extends CustomPainter {
 
     if (message.isNotEmpty) {
       final messageStyle = OnionFontStyle(font: config.title.font, size: config.title.size, color: config.grid.color);
+      final baseStyle = TextStyle(
+        fontFamily: titleFontFamily,
+        fontSize: messageStyle.size.toDouble(),
+        color: messageStyle.color,
+      );
+      // `textbox.h:39` stacks the lines at 1.2x the font's own line skip,
+      // which is what the device shows (36px pitch at Silky's 25px title
+      // font); Flutter's default pitch is the bare line skip, 29px.
+      // [MEAS-device] MainUI/GameSwitcher remove-from-history capture.
+      final singleLine = TextPainter(
+        text: TextSpan(text: 'X', style: baseStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final lineSkip = singleLine.preferredLineHeight;
       final messagePainter = TextPainter(
         text: TextSpan(
           text: message,
-          style: TextStyle(fontFamily: titleFontFamily, fontSize: messageStyle.size.toDouble(), color: messageStyle.color),
+          style: baseStyle.copyWith(height: _lineHeightFactor * lineSkip / messageStyle.size),
         ),
         textDirection: TextDirection.ltr,
         textAlign: TextAlign.center,

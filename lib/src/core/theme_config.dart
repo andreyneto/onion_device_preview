@@ -106,6 +106,22 @@ class OnionBatteryPercentage {
   final int offsetY;
   final OnionTextAlign textAlign;
   final bool fixed;
+
+  /// Only [size] varies in practice (the header's ~18px default), so that
+  /// is all this overrides.
+  OnionBatteryPercentage copyWith({int? size}) {
+    return OnionBatteryPercentage(
+      visible: visible,
+      font: font,
+      size: size ?? this.size,
+      sizeExplicit: sizeExplicit,
+      color: color,
+      offsetX: offsetX,
+      offsetY: offsetY,
+      textAlign: textAlign,
+      fixed: fixed,
+    );
+  }
 }
 
 /// Parsed representation of a theme's `config.json`, with every field

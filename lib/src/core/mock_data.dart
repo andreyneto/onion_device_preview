@@ -242,7 +242,10 @@ class OnionMockData {
       OnionMockSimpleItem('Home-Net-5G', description: 'Connected'),
       OnionMockSimpleItem('Neighbor_WiFi'),
     ]),
-    OnionMockSubmenuItem('Display', children: [
+    // `color.png` and `sound-icon.png` break the icon-* naming of the rest
+    // of the skin, which is why these two rows went icon-less for so long
+    // — but the device does draw them (matched against MainUI_012 at x=20).
+    OnionMockSubmenuItem('Display', iconSkinName: 'color', children: [
       OnionMockMultiValueItem('Brightness', options: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], selectedIndex: 6),
       OnionMockToggleItem('Low battery warning', value: true),
     ]),
@@ -252,10 +255,18 @@ class OnionMockData {
       selectedIndex: 0,
       iconSkinName: 'icon-language-48',
     ),
-    OnionMockSubmenuItem('Sound', children: [
-      OnionMockMultiValueItem('BGM Volume', options: ['Off', 'Low', 'Medium', 'High'], selectedIndex: 2),
-      OnionMockToggleItem('Navigation sound', value: true),
-    ]),
+    // MainUI_012 shows this as a multivalue reading 08/20 — not a submenu —
+    // with the speaker icon rather than the numbered `icon-volume-08`.
+    OnionMockMultiValueItem(
+      'Menu sound',
+      options: [
+        '00/20', '01/20', '02/20', '03/20', '04/20', '05/20', '06/20', //
+        '07/20', '08/20', '09/20', '10/20', '11/20', '12/20', '13/20', //
+        '14/20', '15/20', '16/20', '17/20', '18/20', '19/20', '20/20',
+      ],
+      selectedIndex: 8,
+      iconSkinName: 'sound-icon',
+    ),
     OnionMockToggleItem('Retro Achievements', value: false),
     OnionMockSimpleItem('Device Info', description: 'Miyoo Mini Plus', iconSkinName: 'icon-device-info-48'),
     OnionMockSimpleItem('Factory Reset', iconSkinName: 'icon-factory-reset-48'),

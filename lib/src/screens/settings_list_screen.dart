@@ -41,8 +41,10 @@ class _SettingsListScreenState extends State<SettingsListScreen> {
   final Map<OnionMockToggleItem, bool> _toggleOverrides = {};
   final Map<OnionMockMultiValueItem, int> _multiOverrides = {};
 
-  /// Leading skin icons (`skin/icon-*.png`, themable — MainUI_012 shows
-  /// them on the real Settings menu), resolved on demand by name.
+  /// Leading skin icons (themable — MainUI_012 shows them on the real
+  /// Settings menu), resolved on demand by name. Mostly `icon-*.png`, but
+  /// not all: the Display and Menu sound rows use `color.png` and
+  /// `sound-icon.png`, which don't follow that prefix.
   final Map<String, ui.Image?> _icons = {};
 
   /// Same edge-triggered scroll window as the rom list (device model).
@@ -170,6 +172,9 @@ class _SettingsListScreenState extends State<SettingsListScreen> {
       selected: selected,
       selectedBackground: widget.ctx.image(large ? ThemeAsset.bgListLarge : ThemeAsset.bgListSmall),
       icon: _iconFor(item, selected),
+      // Skin icon = the Settings menu, which starts labels at a fixed x;
+      // pack icon = the Apps list, which starts them after the icon.
+      fixedIconColumn: item.iconSkinName != null,
       label: label,
       description: item is OnionMockSimpleItem ? item.description : null,
       listStyle: widget.ctx.config.list,
