@@ -65,7 +65,27 @@ enum ThemeAsset {
   wifiSignal1('icon-wifi-signal-01'),
   wifiSignal2('icon-wifi-signal-02'),
   wifiSignal3('icon-wifi-signal-03'),
-  wifiSignal4('icon-wifi-signal-04');
+  wifiSignal4('icon-wifi-signal-04'),
+  // Game Switcher (`Onion/src/gameSwitcher`): the two custom bars are
+  // theme-only — when a theme ships them they replace `bg-title` /
+  // `tips-bar-bg` entirely (gameSwitcher.c:71-75, guide.txt) — while the
+  // legend, arrows and brightness frames fall back to the app's own res/.
+  gsTopBar('extra/gs-top-bar'),
+  gsBottomBar('extra/gs-bottom-bar'),
+  gsLegend('extra/gs-legend'),
+  arrowLeftWhite('extra/arrowLeft'),
+  arrowRightWhite('extra/arrowRight'),
+  brightness0('extra/lum0'),
+  brightness1('extra/lum1'),
+  brightness2('extra/lum2'),
+  brightness3('extra/lum3'),
+  brightness4('extra/lum4'),
+  brightness5('extra/lum5'),
+  brightness6('extra/lum6'),
+  brightness7('extra/lum7'),
+  brightness8('extra/lum8'),
+  brightness9('extra/lum9'),
+  brightness10('extra/lum10');
 
   const ThemeAsset(this.logicalName);
 
@@ -73,6 +93,25 @@ enum ThemeAsset {
 
   /// Path relative to a theme's root, e.g. `'skin/bg-title.png'`.
   String get skinPath => 'skin/$logicalName.png';
+}
+
+/// Picks the brightness-slider frame for a 0-10 level, mirroring
+/// `resource_getBrightness` (`resources.h:383`).
+ThemeAsset brightnessAssetFor(int level) {
+  const frames = [
+    ThemeAsset.brightness0,
+    ThemeAsset.brightness1,
+    ThemeAsset.brightness2,
+    ThemeAsset.brightness3,
+    ThemeAsset.brightness4,
+    ThemeAsset.brightness5,
+    ThemeAsset.brightness6,
+    ThemeAsset.brightness7,
+    ThemeAsset.brightness8,
+    ThemeAsset.brightness9,
+    ThemeAsset.brightness10,
+  ];
+  return frames[level.clamp(0, 10)];
 }
 
 /// Picks the battery icon for a charge level, mirroring

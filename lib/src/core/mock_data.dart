@@ -22,6 +22,21 @@ class OnionMockRom {
   final bool isRecent;
 }
 
+/// One entry of the Game Switcher's history: a recently played rom with
+/// its system and accumulated play time (the device reads these from
+/// MainUI's recent list plus the play-activity DB).
+class OnionMockSwitcherGame {
+  const OnionMockSwitcherGame({
+    required this.name,
+    required this.systemId,
+    required this.playSeconds,
+  });
+
+  final String name;
+  final String systemId;
+  final int playSeconds;
+}
+
 class OnionMockApp {
   const OnionMockApp(this.name, this.iconName);
 
@@ -168,6 +183,35 @@ class OnionMockData {
 
   static List<OnionMockRom> get recentRoms =>
       gameSystems.expand((s) => s.roms).where((r) => r.isRecent).toList();
+
+  /// The Game Switcher's history: the most recent rom of each system,
+  /// with deterministic play times (a preview must render the same way
+  /// every run — no wall clock anywhere in this package).
+  static List<OnionMockSwitcherGame> get switcherGames => [
+        for (var i = 0; i < gameSystems.length; i++)
+          OnionMockSwitcherGame(
+            name: gameSystems[i].roms.first.name,
+            systemId: gameSystems[i].id,
+            playSeconds: 1080 + i * 2340,
+          ),
+      ];
+
+  /// Total time across [switcherGames], for the switcher's "time / total"
+  /// header.
+  static int get totalPlaySeconds => switcherGames.fold(0, (sum, game) => sum + game.playSeconds);
+
+  /// How many save-state slots the mocked current game has (the switcher's
+  /// pop menu pages through them under "Load").
+  static const int saveStateSlots = 3;
+
+  /// `str_serializeTime` (`utils/str.c:178-193`): `1h 5m`, `5m 30s`, `42s`.
+  static String formatPlayTime(int seconds) {
+    if (seconds < 60) return '${seconds}s';
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds - 3600 * hours) ~/ 60;
+    if (hours > 0) return '${hours}h ${minutes}m';
+    return '${minutes}m ${seconds - 60 * minutes}s';
+  }
 
   static List<OnionMockRom> get favoriteRoms =>
       gameSystems.expand((s) => s.roms).where((r) => r.isFavorite).toList();

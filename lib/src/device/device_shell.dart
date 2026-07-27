@@ -84,10 +84,10 @@ class MiyooDeviceShell extends StatelessWidget {
               left: 200,
               child: Transform.rotate(angle: -math.pi / 5, child: _PressablePill(onTap: controller.pressSelect)),
             ),
-            // X — no bound action.
-            const Positioned(top: 592, left: 478, child: _PressableCircle(diameter: 92, onTap: null)),
-            // Y — no bound action.
-            const Positioned(top: 683, left: 387, child: _PressableCircle(diameter: 92, onTap: null)),
+            // X and Y only act on screens that bind them (the Game
+            // Switcher does: remove from history / cycle view mode).
+            Positioned(top: 592, left: 478, child: _PressableCircle(diameter: 92, onTap: controller.pressX)),
+            Positioned(top: 683, left: 387, child: _PressableCircle(diameter: 92, onTap: controller.pressY)),
             Positioned(top: 683, left: 569, child: _PressableCircle(diameter: 92, onTap: controller.pressA)),
             Positioned(top: 774, left: 478, child: _PressableCircle(diameter: 92, onTap: controller.pressB)),
           ],

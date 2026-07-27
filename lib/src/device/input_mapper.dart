@@ -5,10 +5,9 @@ import 'device_state.dart';
 /// Maps physical keyboard keys to Miyoo Mini button semantics, using
 /// RetroArch's well-known default keyboard layout (Z/X for B/A, A/S for
 /// Y/X) rather than inventing a new one — arrows for the D-pad, Enter
-/// for Start, Shift for Select, Escape for Menu. Y and X have no
-/// semantic action on [OnionPreviewController] (no screen in this
-/// package defines one for them), so they're mapped for physical
-/// completeness but don't dispatch anywhere.
+/// for Start, Shift for Select, Escape for Menu. X and Y only do
+/// something on screens that bind them (the Game Switcher: X removes a
+/// game from the history, Y cycles the view mode).
 ///
 /// A held key naturally arrives as repeated [KeyDownEvent]s or a
 /// [KeyRepeatEvent] depending on platform — both are treated the same
@@ -60,8 +59,9 @@ class InputMapper {
       case LogicalKeyboardKey.escape:
         controller.pressMenu();
       case LogicalKeyboardKey.keyA:
+        controller.pressY();
       case LogicalKeyboardKey.keyS:
-        break; // Y / X — no bound action.
+        controller.pressX();
       default:
         return false;
     }

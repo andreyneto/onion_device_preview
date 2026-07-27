@@ -47,5 +47,28 @@ void main() {
         isNotEmpty,
       );
     });
+
+    test('every app carries an icon-pack name under app/', () {
+      for (final app in OnionMockData.apps) {
+        expect(app.iconName, startsWith('app/'), reason: app.name);
+      }
+      expect(OnionMockData.iconPackNames, containsAll(OnionMockData.apps.map((a) => a.iconName)));
+    });
+
+    test('switcher history is one game per system, with a matching total', () {
+      final games = OnionMockData.switcherGames;
+
+      expect(games.length, OnionMockData.gameSystems.length);
+      expect(OnionMockData.totalPlaySeconds, games.fold<int>(0, (sum, g) => sum + g.playSeconds));
+    });
+
+    test('formatPlayTime matches str_serializeTime', () {
+      // utils/str.c:178-193 — seconds under a minute, then m/s, then h/m.
+      expect(OnionMockData.formatPlayTime(42), '42s');
+      expect(OnionMockData.formatPlayTime(330), '5m 30s');
+      expect(OnionMockData.formatPlayTime(3900), '1h 5m');
+      // The C code's `nTime >= 60` branch with exactly 60s.
+      expect(OnionMockData.formatPlayTime(60), '1m 0s');
+    });
   });
 }

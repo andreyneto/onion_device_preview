@@ -38,10 +38,12 @@ ThemeInspector(controller: controller)     // painel diagnóstico do tema
   `bundle.withRoot(path)`.
 - **Estado mockado**: `setBatteryPercent`, `setCharging`, `setWifi`,
   `setExpertMode`, `setShowRecents`, `setForceHideLabels`, `setSoundEnabled`
-  (bgm + som de navegação do tema), navegação via `pressA/B/Start/Select/Menu`
-  e `moveUp/Down/Left/Right`.
-- **Teclado** (layout RetroArch): setas = D-pad, `X` = A, `Z` = B,
-  `Enter` = Start, `Shift` = Select, `Esc` = Menu.
+  (bgm + som de navegação do tema), `setApplyThemeIcons` (usar a pasta `icons/`
+  do tema, como o ThemeSwitcher do device), navegação via
+  `pressA/B/X/Y/Start/Select/Menu` e `moveUp/Down/Left/Right`.
+- **Teclado** (layout RetroArch): setas = D-pad, `X` = A, `Z` = B, `A` = Y,
+  `S` = X, `Enter` = Start, `Shift` = Select, `Esc` = Menu (abre o Game
+  Switcher).
 
 ## Rodando o example (web)
 
@@ -65,9 +67,9 @@ abaixo).
 
 | Camada | O quê |
 |---|---|
-| `src/core/` | `OnionThemeBundle` (zip em memória, packs), `OnionThemeConfig` (parser tolerante com os fallbacks do firmware), `AssetResolver` (tema → skin default → null), `OnionFontResolver` (fontes do zip via FontLoader; `.ttc` → Roboto), mock data |
+| `src/core/` | `OnionThemeBundle` (zip em memória, packs), `OnionThemeConfig` (parser tolerante com os fallbacks do firmware), `AssetResolver` (tema → skin default → null), `IconPackResolver` (`icons/`, `icons/sel/`, `icons/app/` → pack Default), `OnionFontResolver` (fontes do zip via FontLoader; `.ttc` → Roboto), mock data |
 | `src/device/` | `OnionPreviewController` (ChangeNotifier: tema resolvido, navegação em pilha, cursores, handlers por tela, sons), `MiyooDeviceShell`, `InputMapper`, `OnionSoundBank` |
-| `src/screens/` | As telas do OnionUI em blits de coordenada fixa (main menu, game systems, listas, dialog, pop menu, boot/charging/shutdown) + header/footer compartilhados |
+| `src/screens/` | As telas do OnionUI em blits de coordenada fixa (main menu, game systems, listas, apps, Game Switcher, dialog, pop menu, boot/charging/shutdown) + header/footer compartilhados |
 | `src/inspector/` | `ThemeInspector` (config com proveniência tema/default, assets encontrados/ausentes, fontes) |
 
 Princípio de implementação: **nenhum layout flexível nas telas** — só blit em

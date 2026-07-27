@@ -53,6 +53,18 @@ cp "$ONION_RES_DIR/toggle-off.png" "$DEST_DIR/skin/extra/toggle-off.png"
 cp "$PACKAGE_DIR/../Onion/src/chargingState/res/chargingState"*.png "$DEST_DIR/skin/extra/"
 cp "$PACKAGE_DIR/../Onion/src/chargingState/res/chargingState.json" "$DEST_DIR/skin/extra/"
 
+# Game Switcher fallbacks, same extra/ → app res/ rule (load.h:57-60):
+# the button legend, the brightness slider frames (lum0-10) and the
+# white-bordered arrows of the game name bar. NOTE: gs-top-bar and
+# gs-bottom-bar are deliberately NOT copied — the switcher only draws its
+# custom bars when the *theme* ships them (gameSwitcher.c:71-75), so they
+# must stay unresolvable in the default skin.
+GS_RES_DIR="$PACKAGE_DIR/../Onion/src/gameSwitcher/res"
+cp "$GS_RES_DIR/gs-legend.png" "$DEST_DIR/skin/extra/"
+cp "$GS_RES_DIR"/lum*.png "$DEST_DIR/skin/extra/"
+cp "$GS_RES_DIR/arrowLeft.png" "$DEST_DIR/skin/extra/"
+cp "$GS_RES_DIR/arrowRight.png" "$DEST_DIR/skin/extra/"
+
 # System fonts (non-CJK, non-.ttc — Flutter's font loader doesn't support
 # TrueType Collections). See plan.md §3/F3.
 cp "$ONION_APP_DIR/Exo-2-Bold-Italic.ttf" "$DEST_DIR/fonts/"

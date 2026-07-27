@@ -33,7 +33,11 @@ class StatusIndicators extends StatelessWidget {
     required this.batteryStyle,
     required this.batteryFontFamily,
     this.wifiIcon,
+    this.batteryCenter = _defaultBatteryCenter,
   });
+
+  /// `theme_renderHeaderBattery` (`render/header.h:19`).
+  static const Offset _defaultBatteryCenter = Offset(596, 30);
 
   final ui.Image? batteryIcon;
   final int batteryPercentage;
@@ -41,6 +45,11 @@ class StatusIndicators extends StatelessWidget {
   final OnionBatteryPercentage batteryStyle;
   final String batteryFontFamily;
   final ui.Image? wifiIcon;
+
+  /// Where the battery icon's canvas is centered. Defaults to the standard
+  /// header's (596, 30); the Game Switcher recenters it on a custom
+  /// `gs-top-bar`'s own height (`theme_renderHeaderBatteryCustom`).
+  final Offset batteryCenter;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +63,7 @@ class StatusIndicators extends StatelessWidget {
           batteryStyle: batteryStyle,
           batteryFontFamily: batteryFontFamily,
           wifiIcon: wifiIcon,
+          batteryCenter: batteryCenter,
         ),
       ),
     );
@@ -68,6 +78,7 @@ class _StatusIndicatorsPainter extends CustomPainter {
     required this.batteryStyle,
     required this.batteryFontFamily,
     required this.wifiIcon,
+    required this.batteryCenter,
   });
 
   final ui.Image? batteryIcon;
@@ -76,8 +87,8 @@ class _StatusIndicatorsPainter extends CustomPainter {
   final OnionBatteryPercentage batteryStyle;
   final String batteryFontFamily;
   final ui.Image? wifiIcon;
+  final Offset batteryCenter;
 
-  static const _batteryCenter = Offset(596, 30);
   static const _wifiCenter = Offset(528, 30);
   static const _defaultTextSize = 18;
 
@@ -86,7 +97,7 @@ class _StatusIndicatorsPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(const Rect.fromLTWH(0, 0, 640, 480));
     canvas.drawImageCentered(wifiIcon, _wifiCenter);
-    canvas.drawImageCentered(batteryIcon, _batteryCenter);
+    canvas.drawImageCentered(batteryIcon, batteryCenter);
     canvas.restore();
 
     // "Currently charging, hide text" (battery.h:28-29).
@@ -109,8 +120,8 @@ class _StatusIndicatorsPainter extends CustomPainter {
     painter.paint(
       canvas,
       Offset(
-        _batteryCenter.dx - painter.width / 2 + batteryStyle.offsetX,
-        _batteryCenter.dy - painter.height / 2 + offsetY,
+        batteryCenter.dx - painter.width / 2 + batteryStyle.offsetX,
+        batteryCenter.dy - painter.height / 2 + offsetY,
       ),
     );
   }
@@ -118,6 +129,7 @@ class _StatusIndicatorsPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _StatusIndicatorsPainter oldDelegate) {
     return oldDelegate.batteryIcon != batteryIcon ||
+        oldDelegate.batteryCenter != batteryCenter ||
         oldDelegate.batteryPercentage != batteryPercentage ||
         oldDelegate.charging != charging ||
         oldDelegate.wifiIcon != wifiIcon ||

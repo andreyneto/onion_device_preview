@@ -10,6 +10,7 @@ import 'boot_screen.dart';
 import 'charging_screen.dart';
 import 'dialog_screen.dart';
 import 'game_list_screen.dart';
+import 'game_switcher_screen.dart';
 import 'game_systems_screen.dart';
 import 'main_menu_screen.dart';
 import 'pop_menu_screen.dart';
@@ -52,7 +53,7 @@ class _OnionScreenState extends State<OnionScreen> {
     // Menu is the one button whose meaning never depends on the active
     // screen (every OnionOS screen shares the same quick-switcher), so
     // it's bound once here rather than by each screen widget.
-    widget.controller.onMenu = _openGameSwitcherPlaceholder;
+    widget.controller.onMenu = widget.controller.openGameSwitcher;
     widget.controller.ensureThemeLoaded();
   }
 
@@ -63,7 +64,7 @@ class _OnionScreenState extends State<OnionScreen> {
       oldWidget.controller.removeListener(_onControllerChanged);
       oldWidget.controller.onMenu = null;
       widget.controller.addListener(_onControllerChanged);
-      widget.controller.onMenu = _openGameSwitcherPlaceholder;
+      widget.controller.onMenu = widget.controller.openGameSwitcher;
       widget.controller.ensureThemeLoaded();
     }
   }
@@ -74,13 +75,6 @@ class _OnionScreenState extends State<OnionScreen> {
     widget.controller.removeListener(_onControllerChanged);
     widget.controller.onMenu = null;
     super.dispose();
-  }
-
-  void _openGameSwitcherPlaceholder() {
-    widget.controller.showDialog(
-      title: 'Game Switcher',
-      message: 'Not implemented in this preview (see the backlog).',
-    );
   }
 
   void _onControllerChanged() => setState(() {});
@@ -158,7 +152,19 @@ class _ScreenChrome extends StatelessWidget {
   final ThemeRenderContext ctx;
 
   static const _overlayKinds = {OnionScreenKind.dialog, OnionScreenKind.popMenu};
-  static const _fullScreenKinds = {OnionScreenKind.boot, OnionScreenKind.charging, OnionScreenKind.shutdown};
+
+  /// Screens that own their whole 640x480 canvas instead of sitting
+  /// between the shared header and footer. The Game Switcher is one of
+  /// them because its bars are conditional and theme-replaceable
+  /// (`extra/gs-top-bar`/`gs-bottom-bar`), so it draws its own chrome —
+  /// including its own pop menu, whose anchor and scrim differ from
+  /// MainUI's.
+  static const _fullScreenKinds = {
+    OnionScreenKind.boot,
+    OnionScreenKind.charging,
+    OnionScreenKind.shutdown,
+    OnionScreenKind.gameSwitcher,
+  };
 
   OnionScreenKind get _base {
     final stack = controller.navigationStack;
@@ -178,7 +184,17 @@ class _ScreenChrome extends StatelessWidget {
     final base = _base;
     final overlay = _overlay;
 
-    if (_fullScreenKinds.contains(base)) return _fullScreenBody(base);
+    // A dialog is a full-screen overlay that works over anything (the
+    // switcher's "Remove from history" confirmation, for one); a pop menu
+    // isn't, since its geometry belongs to the screen underneath.
+    if (_fullScreenKinds.contains(base)) {
+      return Stack(
+        children: [
+          _fullScreenBody(base),
+          if (overlay == OnionScreenKind.dialog) DialogScreen(controller: controller, ctx: ctx),
+        ],
+      );
+    }
 
     final wifiAsset = _wifiAssetFor(controller.wifi);
 
@@ -237,6 +253,7 @@ class _ScreenChrome extends StatelessWidget {
       OnionScreenKind.boot => BootScreen(controller: controller, ctx: ctx),
       OnionScreenKind.charging => ChargingScreen(controller: controller, ctx: ctx),
       OnionScreenKind.shutdown => ShutdownScreen(controller: controller, ctx: ctx),
+      OnionScreenKind.gameSwitcher => GameSwitcherScreen(controller: controller, ctx: ctx),
       _ => const SizedBox.shrink(),
     };
   }

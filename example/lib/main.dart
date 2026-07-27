@@ -277,6 +277,7 @@ class _ControlPanel extends StatelessWidget {
     (OnionScreenKind.gameSystems, 'Game systems'),
     (OnionScreenKind.gameList, 'Rom list'),
     (OnionScreenKind.settingsList, 'Settings'),
+    (OnionScreenKind.gameSwitcher, 'Game Switcher'),
     (OnionScreenKind.dialog, 'Dialog'),
     (OnionScreenKind.popMenu, 'Pop menu'),
     (OnionScreenKind.charging, 'Charging'),
@@ -300,6 +301,9 @@ class _ControlPanel extends StatelessWidget {
       case OnionScreenKind.settingsList:
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.openSettingsTree(OnionMockData.settings, 'Settings');
+      case OnionScreenKind.gameSwitcher:
+        controller.resetTo(OnionScreenKind.mainMenu);
+        controller.openGameSwitcher();
       case OnionScreenKind.dialog:
         controller.resetTo(OnionScreenKind.mainMenu);
         controller.showDialog(
@@ -474,7 +478,8 @@ class _ControlPanel extends StatelessWidget {
             ),
             const Divider(height: 32),
             Text(
-              'Teclado: setas = D-pad · X = A · Z = B · Enter = Start · Shift = Select · Esc = Menu',
+              'Teclado: setas = D-pad · X = A · Z = B · S = X · A = Y · Enter = Start · '
+              'Shift = Select · Esc = Menu (Game Switcher)',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const Divider(height: 32),

@@ -14,11 +14,16 @@ enum OnionScreenKind {
   gameList,
   gameSystems,
   settingsList,
+  gameSwitcher,
   dialog,
   popMenu,
   charging,
   shutdown,
 }
+
+/// The Game Switcher's three view modes (`gs_appState.h:9-11`): the full
+/// chrome, the game-name bar alone, or nothing but the game's screenshot.
+enum OnionGsViewMode { normal, minimal, fullscreen }
 
 /// Mocked Wi-Fi indicator state. There are 6 real skin assets for this
 /// (`icon-wifi-{connected,locked,signal-01..04}.png`, see
@@ -251,6 +256,126 @@ class OnionPreviewController extends ChangeNotifier {
     goTo(OnionScreenKind.popMenu);
   }
 
+  // --- Game Switcher ---
+  //
+  // The switcher is its own firmware binary (`Onion/src/gameSwitcher`),
+  // and unlike MainUI it's open source — every coordinate and state
+  // transition below is [SRC] (see docs/spec-1a1.md §13). It holds the
+  // recently played games, one per screenshot, and Menu opens it from
+  // anywhere.
+
+  int _gsIndex = 0;
+  OnionGsViewMode _gsViewMode = OnionGsViewMode.normal;
+  bool _gsShowTime = false;
+  bool _gsShowTotal = true;
+  bool _gsShowLegend = true;
+  int _gsSaveSlot = 0;
+
+  int get gsIndex => _gsIndex;
+  OnionGsViewMode get gsViewMode => _gsViewMode;
+
+  /// Whether the header shows the current game's play time instead of the
+  /// "GameSwitcher" title, and whether the total is appended
+  /// (`action_toggleHeader`, cycled by Select).
+  bool get gsShowTime => _gsShowTime;
+  bool get gsShowTotal => _gsShowTotal;
+
+  /// Whether the button legend (`extra/gs-legend`) is still showing — the
+  /// firmware hides it 5s after entry and remembers that choice
+  /// (`gameSwitcher.c:84-88`), so it stays hidden for the session here too.
+  bool get gsShowLegend => _gsShowLegend;
+
+  /// Selected save-state slot, shown in the pop menu's "Load" preview.
+  int get gsSaveSlot => _gsSaveSlot;
+
+  List<OnionMockSwitcherGame> get gsGames => OnionMockData.switcherGames;
+
+  /// Opens the switcher (what Menu does on every screen).
+  void openGameSwitcher() {
+    if (currentScreen == OnionScreenKind.gameSwitcher) return;
+    goTo(OnionScreenKind.gameSwitcher);
+  }
+
+  /// Left/right move by one game and stop at the ends — no wrapping
+  /// (`handleUpdateKeystateMain`).
+  void gsMove(int delta) {
+    final next = (_gsIndex + delta).clamp(0, gsGames.length - 1);
+    if (next == _gsIndex) return;
+    _gsIndex = next;
+    _gsSaveSlot = 0;
+    _playChangeSfx();
+    notifyListeners();
+  }
+
+  void setGsViewMode(OnionGsViewMode value) {
+    _gsViewMode = value;
+    notifyListeners();
+  }
+
+  /// Y toggles between normal and minimal, or restores from fullscreen.
+  void toggleGsViewMode() {
+    setGsViewMode(switch (_gsViewMode) {
+      OnionGsViewMode.normal => OnionGsViewMode.minimal,
+      OnionGsViewMode.minimal => OnionGsViewMode.normal,
+      // Fullscreen is entered by *holding* Y; a tap restores.
+      OnionGsViewMode.fullscreen => OnionGsViewMode.normal,
+    });
+  }
+
+  /// Select cycles title → play time → play time + total → title, and
+  /// brings the legend back (`action_toggleHeader`).
+  void cycleGsHeader() {
+    if (!_gsShowTime && !_gsShowTotal) {
+      _gsShowTime = true;
+      _gsShowTotal = false;
+    } else if (_gsShowTime && !_gsShowTotal) {
+      _gsShowTime = true;
+      _gsShowTotal = true;
+    } else {
+      _gsShowTime = false;
+      _gsShowTotal = false;
+    }
+    _gsShowLegend = true;
+    notifyListeners();
+  }
+
+  void hideGsLegend() {
+    if (!_gsShowLegend) return;
+    _gsShowLegend = false;
+    notifyListeners();
+  }
+
+  void setGsSaveSlot(int slot) {
+    final next = slot.clamp(0, OnionMockData.saveStateSlots - 1);
+    if (next == _gsSaveSlot) return;
+    _gsSaveSlot = next;
+    notifyListeners();
+  }
+
+  // --- Brightness ---
+  //
+  // 0-10, shown as a slider overlay (`extra/lum0..10`) for 2s after a
+  // change — in the switcher, that's what up/down do
+  // (`gameSwitcher.c:90-93`, `handleUpdateKeystateMain`).
+
+  int _brightness = 7;
+  bool _brightnessChanged = false;
+
+  int get brightness => _brightness;
+  bool get brightnessChanged => _brightnessChanged;
+
+  void setBrightness(int value) {
+    _brightness = value.clamp(0, 10);
+    _brightnessChanged = true;
+    notifyListeners();
+  }
+
+  void hideBrightness() {
+    if (!_brightnessChanged) return;
+    _brightnessChanged = false;
+    notifyListeners();
+  }
+
   // --- Sounds ---
   //
   // `sound/bgm.mp3` looped + `sound/change.wav` on navigation, resolved
@@ -465,6 +590,8 @@ class OnionPreviewController extends ChangeNotifier {
   }
 
   void moveUp() {
+    final handler = _handlers[currentScreen]?.up;
+    if (handler != null) return handler();
     final cols = _gridColumns[currentScreen];
     if (cols != null) {
       _moveLinearClamped(-cols);
@@ -474,6 +601,8 @@ class OnionPreviewController extends ChangeNotifier {
   }
 
   void moveDown() {
+    final handler = _handlers[currentScreen]?.down;
+    if (handler != null) return handler();
     final cols = _gridColumns[currentScreen];
     if (cols != null) {
       _moveLinearClamped(cols);
@@ -482,8 +611,17 @@ class OnionPreviewController extends ChangeNotifier {
     }
   }
 
-  void moveLeft() => _moveIndex(_horizontal, _columnCount, -1);
-  void moveRight() => _moveIndex(_horizontal, _columnCount, 1);
+  void moveLeft() {
+    final handler = _handlers[currentScreen]?.left;
+    if (handler != null) return handler();
+    _moveIndex(_horizontal, _columnCount, -1);
+  }
+
+  void moveRight() {
+    final handler = _handlers[currentScreen]?.right;
+    if (handler != null) return handler();
+    _moveIndex(_horizontal, _columnCount, 1);
+  }
 
   // --- Semantic button actions ---
   //
@@ -508,14 +646,37 @@ class OnionPreviewController extends ChangeNotifier {
 
   /// Registers [screen]'s button handlers (replacing any previous ones
   /// for that screen). Call from the screen widget's `initState`.
+  ///
+  /// [onUp]/[onDown] override the generic selection cursor for screens
+  /// where the D-pad's vertical axis means something else (the Game
+  /// Switcher maps it to brightness); leave them null for list/grid
+  /// screens, which use [moveUp]/[moveDown]'s cursor.
+  /// [onLeft]/[onRight] likewise override the horizontal cursor.
   void bindScreenHandlers(
     OnionScreenKind screen, {
     void Function()? onConfirm,
     void Function()? onCancel,
     void Function()? onStart,
     void Function()? onSelect,
+    void Function()? onX,
+    void Function()? onY,
+    void Function()? onUp,
+    void Function()? onDown,
+    void Function()? onLeft,
+    void Function()? onRight,
   }) {
-    _handlers[screen] = _ScreenHandlers(onConfirm, onCancel, onStart, onSelect);
+    _handlers[screen] = _ScreenHandlers(
+      confirm: onConfirm,
+      cancel: onCancel,
+      start: onStart,
+      select: onSelect,
+      x: onX,
+      y: onY,
+      up: onUp,
+      down: onDown,
+      left: onLeft,
+      right: onRight,
+    );
   }
 
   /// Drops [screen]'s handlers. Call from the screen widget's `dispose`;
@@ -540,18 +701,42 @@ class OnionPreviewController extends ChangeNotifier {
 
   void pressStart() => _handlers[currentScreen]?.start?.call();
   void pressSelect() => _handlers[currentScreen]?.select?.call();
+
+  /// X and Y only do something on screens that ask for them (the Game
+  /// Switcher: X removes from history, Y toggles the view mode) — the
+  /// shell draws both buttons regardless.
+  void pressX() => _handlers[currentScreen]?.x?.call();
+  void pressY() => _handlers[currentScreen]?.y?.call();
+
   void pressMenu() => onMenu?.call();
 }
 
 /// One screen's registered button handlers (see
 /// [OnionPreviewController.bindScreenHandlers]).
 class _ScreenHandlers {
-  const _ScreenHandlers(this.confirm, this.cancel, this.start, this.select);
+  const _ScreenHandlers({
+    this.confirm,
+    this.cancel,
+    this.start,
+    this.select,
+    this.x,
+    this.y,
+    this.up,
+    this.down,
+    this.left,
+    this.right,
+  });
 
   final void Function()? confirm;
   final void Function()? cancel;
   final void Function()? start;
   final void Function()? select;
+  final void Function()? x;
+  final void Function()? y;
+  final void Function()? up;
+  final void Function()? down;
+  final void Function()? left;
+  final void Function()? right;
 }
 
 /// One level of settings-submenu depth: the items shown and the

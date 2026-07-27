@@ -82,6 +82,44 @@ void main() {
       controller.resetTo(OnionScreenKind.mainMenu);
       controller.openSettingsTree(OnionMockData.settings, 'Settings');
       await _renderTo(tester, controller, 'settings');
+
+      controller.resetTo(OnionScreenKind.mainMenu);
+      controller.openSettingsTree(
+        [
+          for (final app in OnionMockData.apps)
+            OnionMockSimpleItem(app.name, large: true, iconPackName: app.iconName),
+        ],
+        'Apps',
+      );
+      await _renderTo(tester, controller, 'apps');
+
+      // Game Switcher (T7.2) — the legend is up for the first 5s, so the
+      // first render catches it; then the view modes and the pop menu.
+      controller.resetTo(OnionScreenKind.mainMenu);
+      controller.openGameSwitcher();
+      await _renderTo(tester, controller, 'game_switcher');
+
+      // Select cycles nothing → time → time + total (the firmware's own
+      // initial state is show_time false / show_total true, so the first
+      // press only clears the flags).
+      controller.gsMove(1);
+      controller.cycleGsHeader();
+      controller.cycleGsHeader();
+      controller.cycleGsHeader();
+      await _renderTo(tester, controller, 'game_switcher_time');
+
+      controller.setBrightness(4);
+      await _renderTo(tester, controller, 'game_switcher_brightness');
+
+      controller.setGsViewMode(OnionGsViewMode.minimal);
+      await _renderTo(tester, controller, 'game_switcher_minimal');
+
+      controller.setGsViewMode(OnionGsViewMode.normal);
+      controller.showPopMenu(const ['Resume', 'Save', 'Load', 'Exit to menu'], onSelect: (_) {});
+      await _renderTo(tester, controller, 'game_switcher_pop_menu');
+
+      controller.setSelection(OnionScreenKind.popMenu, 2);
+      await _renderTo(tester, controller, 'game_switcher_load');
     });
   });
 }
