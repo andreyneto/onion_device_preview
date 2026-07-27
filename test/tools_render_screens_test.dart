@@ -114,6 +114,22 @@ void main() {
 
       controller.setSelection(OnionScreenKind.popMenu, 2);
       await _renderTo(tester, controller, 'game_switcher_load');
+
+      // Boot / shutdown splashes: the art comes from bootScreen's own
+      // res/ (T7.4), so these must not be blank.
+      controller.resetTo(OnionScreenKind.boot);
+      await _renderTo(tester, controller, 'boot');
+
+      controller.setShutdownSaving(false);
+      controller.resetTo(OnionScreenKind.shutdown);
+      await _renderTo(tester, controller, 'shutdown');
+
+      controller.setShutdownSaving(true);
+      controller.resetTo(OnionScreenKind.shutdown);
+      await _renderTo(tester, controller, 'shutdown_save');
+
+      controller.resetTo(OnionScreenKind.charging);
+      await _renderTo(tester, controller, 'charging');
     });
   });
 }

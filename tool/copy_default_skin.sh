@@ -53,6 +53,15 @@ cp "$ONION_RES_DIR/toggle-off.png" "$DEST_DIR/skin/extra/toggle-off.png"
 cp "$PACKAGE_DIR/../Onion/src/chargingState/res/chargingState"*.png "$DEST_DIR/skin/extra/"
 cp "$PACKAGE_DIR/../Onion/src/chargingState/res/chargingState.json" "$DEST_DIR/skin/extra/"
 
+# Boot / shutdown screens: same extra/ → app res/ rule. The stock skin
+# ships no extra/, so without these the boot screen has no logo and the
+# shutdown screen is blank — which is NOT what the device shows
+# (bootScreen.c serves them from its own res/).
+BOOT_RES_DIR="$PACKAGE_DIR/../Onion/src/bootScreen/res"
+cp "$BOOT_RES_DIR/bootScreen.png" "$DEST_DIR/skin/extra/"
+cp "$BOOT_RES_DIR/Screen_Off.png" "$DEST_DIR/skin/extra/"
+cp "$BOOT_RES_DIR/Screen_Off_Save.png" "$DEST_DIR/skin/extra/"
+
 # Game Switcher fallbacks, same extra/ → app res/ rule (load.h:57-60):
 # the button legend, the brightness slider frames (lum0-10) and the
 # white-bordered arrows of the game name bar. NOTE: gs-top-bar and

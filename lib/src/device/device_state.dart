@@ -450,6 +450,21 @@ class OnionPreviewController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Shutdown variant ---
+  //
+  // The runtime shuts down with `bootScreen "End"` normally and
+  // `"End_Save"` when a running game's state is being written first
+  // (`runtime.sh:579-582`), which swaps `extra/Screen_Off` for
+  // `extra/Screen_Off_Save`.
+
+  bool _shutdownSaving = false;
+  bool get shutdownSaving => _shutdownSaving;
+
+  void setShutdownSaving(bool value) {
+    _shutdownSaving = value;
+    notifyListeners();
+  }
+
   // --- Expert mode (shows the RetroArch tab on the main menu) ---
 
   bool _expertMode = false;

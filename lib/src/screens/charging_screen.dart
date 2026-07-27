@@ -30,6 +30,11 @@ class ChargingScreen extends StatefulWidget {
 class _ChargingScreenState extends State<ChargingScreen> {
   static const _kMaxFrames = 60;
 
+  /// `min_delay` (`chargingState.c:105`): the floor on `frame_delay`, and
+  /// also the firmware loop's own `msleep`, so it doubles as the fastest
+  /// the animation can possibly run.
+  static const _kMinDelayMs = 15;
+
   List<ui.Image> _frames = const [];
   int _frameIndex = 0;
   Timer? _timer;
@@ -67,8 +72,10 @@ class _ChargingScreenState extends State<ChargingScreen> {
         final decoded = jsonDecode(utf8.decode(jsonBytes));
         if (decoded is Map && decoded['frame_delay'] is num) {
           final raw = (decoded['frame_delay'] as num).toInt();
-          frameDelayMs = raw > 10000 ? (raw / 1000).round() : raw;
-          if (frameDelayMs < 15) frameDelayMs = 15;
+          // `value >= 10000 ? value / 1000 : value`, integer division
+          // (chargingState.c:130-131) — 10000 itself is microseconds.
+          frameDelayMs = raw >= 10000 ? raw ~/ 1000 : raw;
+          if (frameDelayMs < _kMinDelayMs) frameDelayMs = _kMinDelayMs;
         }
       } catch (_) {
         // Malformed sidecar: fall back to the default delay.

@@ -284,6 +284,7 @@ class _ControlPanel extends StatelessWidget {
     ('popMenu', 'Pop menu'),
     ('charging', 'Charging'),
     ('shutdown', 'Shutdown'),
+    ('shutdownSave', 'Shutdown (salvando)'),
   ];
 
   void _showScreen(String id) {
@@ -295,6 +296,10 @@ class _ControlPanel extends StatelessWidget {
       case 'charging':
         controller.resetTo(OnionScreenKind.charging);
       case 'shutdown':
+        controller.setShutdownSaving(false);
+        controller.resetTo(OnionScreenKind.shutdown);
+      case 'shutdownSave':
+        controller.setShutdownSaving(true);
         controller.resetTo(OnionScreenKind.shutdown);
       case 'gameSystems':
         controller.resetTo(OnionScreenKind.mainMenu);
@@ -345,7 +350,7 @@ class _ControlPanel extends StatelessWidget {
       OnionScreenKind.dialog => 'dialog',
       OnionScreenKind.popMenu => 'popMenu',
       OnionScreenKind.charging => 'charging',
-      OnionScreenKind.shutdown => 'shutdown',
+      OnionScreenKind.shutdown => controller.shutdownSaving ? 'shutdownSave' : 'shutdown',
     };
   }
 
