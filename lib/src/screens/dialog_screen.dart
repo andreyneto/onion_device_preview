@@ -137,7 +137,13 @@ class _DialogPainter extends CustomPainter {
     canvas.drawImageTopLeft(popBg, centerRect.topLeft);
 
     if (title.isNotEmpty) {
-      final titlePainter = OnionCanvasOps.layoutOnionText(title, style: config.total, fontFamily: titleFontFamily);
+      // `dialog.h:45` renders the title with the TITLE font — i.e. the
+      // theme's `title.font`/`title.size` — and takes only the *color*
+      // from `total`. Using `total.size` here would pick up the fallback
+      // chain total <- hint, which 15 real themes resolve to 0 (an
+      // invisible title) and 145 more to a size the device never uses.
+      final titleStyle = OnionFontStyle(font: config.title.font, size: config.title.size, color: config.total.color);
+      final titlePainter = OnionCanvasOps.layoutOnionText(title, style: titleStyle, fontFamily: titleFontFamily);
       titlePainter.paint(
         canvas,
         Offset((size.width - titlePainter.width) / 2, centerRect.top + 25 - titlePainter.height / 2),

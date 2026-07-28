@@ -17,6 +17,7 @@ import 'pop_menu_screen.dart';
 import 'settings_list_screen.dart';
 import 'shutdown_screen.dart';
 import 'theme_render_context.dart';
+import 'widgets/onion_canvas.dart';
 import 'widgets/status_indicators.dart';
 import 'widgets/theme_footer.dart';
 import 'widgets/theme_header.dart';
@@ -88,11 +89,21 @@ class _OnionScreenState extends State<OnionScreen> {
     final content = SizedBox(
       width: OnionScreen.logicalSize.width,
       height: OnionScreen.logicalSize.height,
-      child: ColoredBox(
-        color: const Color(0xFF000000),
-        child: renderContext == null
-            ? const SizedBox.shrink()
-            : _ScreenChrome(controller: widget.controller, ctx: renderContext),
+      // Everything the firmware draws goes through `SDL_BlitSurface` into
+      // the 640x480 framebuffer, which clips: a surface blitted at x=665
+      // is simply not on screen. Themes rely on that — AnalogPhosphor and
+      // Scallion ship 640x54 fully transparent `icon-A-54`/`icon-B-54`
+      // canvases precisely to push the footer legend past the right edge
+      // (`footer.h:31` advances by the icon's full width), and win98
+      // parks its battery via a 982x900 canvas (spec §11.1). Without this
+      // clip that overflow paints over the device shell's bezel.
+      child: ClipRect(
+        child: ColoredBox(
+          color: const Color(0xFF000000),
+          child: renderContext == null
+              ? const SizedBox.shrink()
+              : _ScreenChrome(controller: widget.controller, ctx: renderContext),
+        ),
       ),
     );
 
@@ -207,6 +218,13 @@ class _ScreenChrome extends StatelessWidget {
       children: [
         Positioned.fill(child: CustomPaint(painter: _BackgroundPainter(ctx.image(ThemeAsset.background)))),
         _chromeBody(context, base),
+        // Roms layer 15 (`docs/guide.txt`): an empty folder's `Empty` art
+        // sits *above* the header and footer — themes ship it as a whole
+        // 640x480 composition, tips bar included — blitted at its native
+        // size, centered, exactly like the switcher's empty history
+        // (`gameSwitcher.c:112-117`).
+        if (base == OnionScreenKind.gameList && controller.gameRoms.isEmpty)
+          Positioned.fill(child: CustomPaint(painter: _EmptyArtPainter(ctx.image(ThemeAsset.emptyBg)))),
         if (overlay != null)
           overlay == OnionScreenKind.dialog
               ? DialogScreen(controller: controller, ctx: ctx)
@@ -357,6 +375,20 @@ class _ScreenChrome extends StatelessWidget {
       OnionWifiState.signal4 => ThemeAsset.wifiSignal4,
     };
   }
+}
+
+class _EmptyArtPainter extends CustomPainter {
+  const _EmptyArtPainter(this.emptyBg);
+
+  final ui.Image? emptyBg;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawImageCentered(emptyBg, Offset(size.width / 2, size.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant _EmptyArtPainter oldDelegate) => oldDelegate.emptyBg != emptyBg;
 }
 
 class _BackgroundPainter extends CustomPainter {

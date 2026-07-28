@@ -82,11 +82,11 @@ class _GameListScreenState extends State<GameListScreen> {
     final roms = _roms;
     widget.controller.setItemCount(OnionScreenKind.gameList, roms.length);
 
-    if (roms.isEmpty) {
-      return Center(
-        child: RawImage(image: widget.ctx.image(ThemeAsset.emptyBg), filterQuality: FilterQuality.none),
-      );
-    }
+    // The `Empty` art is drawn by `_ScreenChrome` instead: it's layer 15
+    // of the Roms stack (`docs/guide.txt`), *above* `bg-title` and
+    // `tips-bar-bg`, at its native size on the full 640x480 screen — not
+    // scaled into this body's 640x360 band.
+    if (roms.isEmpty) return const SizedBox.shrink();
 
     final activeIndex = _activeIndex;
     final maxStart = (roms.length - _kVisibleRows).clamp(0, roms.length);
