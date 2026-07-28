@@ -495,7 +495,7 @@ class OnionPreviewController extends ChangeNotifier {
   //
   // Default false: the factory-default stock main menu shows exactly 4
   // tabs (Favorites/Games/Apps/Settings) — confirmed by the 4 dots in
-  // the official Silky preview (`docs/spec-1a1.md` §3.1). OnionOS's own
+  // the official Silky preview (`docs/spec-1a1.md` §3.1). Onion's own
   // Tweaks toggle for this is "Show recents".
 
   bool _showRecents = false;
@@ -676,7 +676,7 @@ class OnionPreviewController extends ChangeNotifier {
   // `dialog`, and when it closes, dispatch naturally falls back to what
   // the base screen still has registered.
   //
-  // B is the one universal OnionOS convention — it always backs out — so
+  // B is the one universal Onion convention — it always backs out — so
   // it falls back to [goBack] when the current screen didn't override
   // it. Menu is the opposite: its meaning never depends on the screen
   // (the quick-switcher), so it stays a single global callback.

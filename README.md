@@ -1,7 +1,7 @@
 # onion_device_preview
 
 Flutter package that renders a **Miyoo Mini / Mini+** mockup running
-[OnionOS](https://github.com/OnionUI/Onion), applying a theme straight from a
+[Onion](https://github.com/OnionUI/Onion), applying a theme straight from a
 `.zip`'s bytes — with mocked device state (battery, wi-fi, screens, keyboard
 navigation) so you can preview themes without a console at hand.
 

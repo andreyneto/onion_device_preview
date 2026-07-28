@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copies the OnionOS default skin (theme "Silky") from the sibling Onion/
+# Copies the Onion default skin (theme "Silky") from the sibling Onion/
 # firmware checkout into assets/default_skin/, so the package always has
 # a fallback to render when a theme zip is missing an asset (mirrors the
 # firmware's own fallback chain, see Onion/src/common/theme/load.h).

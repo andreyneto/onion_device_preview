@@ -2,7 +2,7 @@
 ///
 /// Feed it a theme zip's bytes ([OnionThemeBundle.fromZipBytes]) — or start
 /// from the built-in "Silky" default ([OnionThemeBundle.defaultTheme]) —
-/// and it renders the OnionOS firmware UI (main menu, rom lists, settings,
+/// and it renders the Onion firmware UI (main menu, rom lists, settings,
 /// dialogs, boot/charging screens...) at the device's native 640×480,
 /// driven by mocked device state.
 ///

@@ -52,7 +52,7 @@ class _OnionScreenState extends State<OnionScreen> {
     super.initState();
     widget.controller.addListener(_onControllerChanged);
     // Menu is the one button whose meaning never depends on the active
-    // screen (every OnionOS screen shares the same quick-switcher), so
+    // screen (every Onion screen shares the same quick-switcher), so
     // it's bound once here rather than by each screen widget.
     widget.controller.onMenu = widget.controller.openGameSwitcher;
     widget.controller.ensureThemeLoaded();

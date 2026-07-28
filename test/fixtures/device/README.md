@@ -1,6 +1,6 @@
 # Native 640×480 device captures
 
-Screenshots from a Miyoo Mini Plus running OnionOS **v4.4.0-beta2-f11f7a0d**
+Screenshots from a Miyoo Mini Plus running Onion **v4.4.0-beta2-f11f7a0d**
 with the **"Silky by DiMo"** theme from the `Themes` repo — not the Silky built
 into the firmware, which is a different theme (it ships no `skin/extra/`, so it
 never exercises the Game Switcher's custom bars).

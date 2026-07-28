@@ -125,7 +125,7 @@ class OnionBatteryPercentage {
 }
 
 /// Parsed representation of a theme's `config.json`, with every field
-/// defaulted per the OnionOS firmware (`Onion/src/common/theme/config.h`).
+/// defaulted per the Onion firmware (`Onion/src/common/theme/config.h`).
 /// Every key is optional; see `plan.md` §5-F2 for the full fallback chain.
 class OnionThemeConfig {
   const OnionThemeConfig({
