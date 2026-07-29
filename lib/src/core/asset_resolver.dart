@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -162,17 +163,62 @@ class AssetResolver {
     final themeImage = await _tryDecode(themeBytesAt(asset.skinPath));
     if (themeImage != null) {
       _foundInTheme.add(asset);
-      return _cache[asset] = themeImage;
+      return _cache[asset] = await _postProcess(asset, themeImage);
     }
 
     final defaultImage = await _tryDecode(await _loadDefaultSkinBytes(asset.skinPath));
     if (defaultImage != null) {
       _foundInDefault.add(asset);
-      return _cache[asset] = defaultImage;
+      return _cache[asset] = await _postProcess(asset, defaultImage);
     }
 
     _missing.add(asset);
     return _cache[asset] = null;
+  }
+
+  /// The firmware rotates `background.png` 180° at load time — see
+  /// `Onion/src/common/theme/background.h:16`, which wraps `theme_loadImage`
+  /// in `rotate180()`. Doing it here, once, means every consumer of
+  /// [ThemeAsset.background] inherits it: the full-screen blit, the header
+  /// and footer strips cropped out of it, and the list-row dim.
+  ///
+  /// Only `background` gets this. `rotate180` appears nowhere else in the
+  /// firmware, so `extra/bootScreen`, `Screen_Off` and the charging frames
+  /// are blitted upright.
+  ///
+  /// Verified three ways, because the package previously assumed the
+  /// opposite (the rotation was read as a panel quirk invisible on screen):
+  /// the firmware source above; a user reporting the inversion on a
+  /// physical Mini; and 40 of 40 themes whose repo `preview.png` (captured
+  /// on a real device) matches the rotated background, never the raw file.
+  /// The goldens never caught it because they all use the bundled Silky,
+  /// whose background is a single flat colour and so is unchanged by a
+  /// 180° rotation.
+  ///
+  /// `rotate180.h` also fills the surface red and reblits at `(-2,-2)`;
+  /// that offset almost certainly cancels padding added by
+  /// `rotozoomSurface`, leaving the red as a safety net that never shows.
+  /// So this is a clean rotation, with no offset and no red edge.
+  static Future<ui.Image> _postProcess(ThemeAsset asset, ui.Image image) async {
+    if (asset != ThemeAsset.background) return image;
+    return _rotate180(image);
+  }
+
+  static Future<ui.Image> _rotate180(ui.Image image) async {
+    final width = image.width;
+    final height = image.height;
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
+    canvas.translate(width / 2, height / 2);
+    canvas.rotate(math.pi);
+    canvas.translate(-width / 2, -height / 2);
+    canvas.drawImage(image, ui.Offset.zero, ui.Paint()..filterQuality = ui.FilterQuality.none);
+    final picture = recorder.endRecording();
+    try {
+      return await picture.toImage(width, height);
+    } finally {
+      picture.dispose();
+    }
   }
 
   /// Resolves an arbitrary skin-relative path through the same zip →

@@ -80,4 +80,50 @@ void main() {
       expect(identical(first, second), isTrue);
     });
   });
+
+  // Mirrors the firmware's thresholds in `render/battery.h:7-20`. The
+  // logical names carry a literal `%`, and all six files ship in 242+ of
+  // the themes in the repo, so a mismatch here would silently render the
+  // default skin's battery over someone's theme.
+  group('batteryAssetFor', () {
+    test('maps each charge level to the firmware\'s asset', () {
+      expect(batteryAssetFor(0), ThemeAsset.battery0);
+      expect(batteryAssetFor(4), ThemeAsset.battery0);
+      expect(batteryAssetFor(5), ThemeAsset.battery20);
+      expect(batteryAssetFor(29), ThemeAsset.battery20);
+      expect(batteryAssetFor(30), ThemeAsset.battery50);
+      expect(batteryAssetFor(59), ThemeAsset.battery50);
+      expect(batteryAssetFor(60), ThemeAsset.battery80);
+      expect(batteryAssetFor(89), ThemeAsset.battery80);
+      expect(batteryAssetFor(90), ThemeAsset.batteryFull);
+      expect(batteryAssetFor(100), ThemeAsset.batteryFull);
+    });
+
+    test('charging wins over the charge level', () {
+      for (final percentage in [0, 50, 100]) {
+        expect(batteryAssetFor(percentage, charging: true), ThemeAsset.batteryCharging);
+      }
+    });
+
+    test('resolves to the file names themes actually ship', () {
+      expect(batteryAssetFor(0).skinPath, 'skin/power-0%-icon.png');
+      expect(batteryAssetFor(20).skinPath, 'skin/power-20%-icon.png');
+      expect(batteryAssetFor(50).skinPath, 'skin/power-50%-icon.png');
+      expect(batteryAssetFor(80).skinPath, 'skin/power-80%-icon.png');
+      expect(batteryAssetFor(100).skinPath, 'skin/power-full-icon.png');
+      expect(
+        batteryAssetFor(100, charging: true).skinPath,
+        'skin/ic-power-charge-100%.png',
+      );
+    });
+
+    test('every battery asset is covered by the bundled default skin', () async {
+      final resolver = AssetResolver(OnionThemeBundle.defaultTheme());
+
+      for (final percentage in [0, 20, 50, 80, 100]) {
+        expect(await resolver.resolve(batteryAssetFor(percentage)), isNotNull);
+      }
+      expect(await resolver.resolve(batteryAssetFor(50, charging: true)), isNotNull);
+    });
+  });
 }
