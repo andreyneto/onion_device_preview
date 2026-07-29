@@ -46,10 +46,10 @@ void main() {
       await _pumpInspector(tester, controller);
 
       expect(find.text('MyTheme'), findsOneWidget);
-      expect(find.text('por Me'), findsOneWidget);
+      expect(find.text('by Me'), findsOneWidget);
       // title.size was set by the theme; everything else fell back —
       // both badge kinds must therefore be present.
-      expect(find.text('tema'), findsWidgets);
+      expect(find.text('theme'), findsWidgets);
       expect(find.text('default'), findsWidgets);
     });
 
@@ -64,10 +64,10 @@ void main() {
 
       await _pumpInspector(tester, controller);
 
-      expect(find.text('Assets — do tema (1)'), findsOneWidget);
+      expect(find.text('Assets — from the theme (1)'), findsOneWidget);
       final ctx = controller.renderContext!;
-      expect(find.text('Assets — do skin default (${ctx.assetsFromDefaultSkin.length})'), findsOneWidget);
-      expect(find.text('Assets — ausentes (${ctx.assetsMissing.length})'), findsOneWidget);
+      expect(find.text('Assets — from the default skin (${ctx.assetsFromDefaultSkin.length})'), findsOneWidget);
+      expect(find.text('Assets — missing (${ctx.assetsMissing.length})'), findsOneWidget);
     });
 
     testWidgets('surfaces a failed theme load without losing the previous theme', (tester) async {
@@ -79,7 +79,7 @@ void main() {
       await _pumpInspector(tester, controller);
 
       expect(find.text('Silky'), findsOneWidget);
-      expect(find.textContaining('Falha ao carregar'), findsNothing);
+      expect(find.textContaining('Failed to load'), findsNothing);
     });
   });
 }

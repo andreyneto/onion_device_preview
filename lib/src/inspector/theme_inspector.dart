@@ -43,30 +43,30 @@ class ThemeInspector extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _header(theme.config, raw),
-                if (controller.themeLoading) const _StatusLine('Carregando tema…', _Palette.dim),
+                if (controller.themeLoading) const _StatusLine('Loading theme…', _Palette.dim),
                 if (controller.themeLoadError != null)
-                  _StatusLine('Falha ao carregar: ${controller.themeLoadError}', _Palette.bad),
+                  _StatusLine('Failed to load: ${controller.themeLoadError}', _Palette.bad),
                 const SizedBox(height: 8),
                 _Section(title: 'Config', initiallyExpanded: true, child: _configTable(config, raw)),
                 if (ctx != null) ...[
                   _Section(
-                    title: 'Assets — do tema (${ctx.assetsFoundInTheme.length})',
+                    title: 'Assets — from the theme (${ctx.assetsFoundInTheme.length})',
                     child: _assetList(ctx.assetsFoundInTheme, _Palette.good),
                   ),
                   _Section(
-                    title: 'Assets — do skin default (${ctx.assetsFromDefaultSkin.length})',
+                    title: 'Assets — from the default skin (${ctx.assetsFromDefaultSkin.length})',
                     child: _assetList(ctx.assetsFromDefaultSkin, _Palette.dim),
                   ),
                   _Section(
-                    title: 'Assets — ausentes (${ctx.assetsMissing.length})',
+                    title: 'Assets — missing (${ctx.assetsMissing.length})',
                     initiallyExpanded: ctx.assetsMissing.isNotEmpty,
                     child: _assetList(ctx.assetsMissing, _Palette.bad),
                   ),
                   _Section(
-                    title: 'Ícones (pack) — ${_iconPackSummary(ctx)}',
+                    title: 'Icons (pack) — ${_iconPackSummary(ctx)}',
                     child: _iconPackList(ctx),
                   ),
-                  _Section(title: 'Fontes', initiallyExpanded: true, child: _fontTable(ctx)),
+                  _Section(title: 'Fonts', initiallyExpanded: true, child: _fontTable(ctx)),
                 ],
               ],
             ),
@@ -78,11 +78,11 @@ class ThemeInspector extends StatelessWidget {
 
   Widget _header(OnionThemeConfig config, Map<String, dynamic>? raw) {
     final theme = controller.theme;
-    final name = config.name.isEmpty ? '(tema sem nome)' : config.name;
+    final name = config.name.isEmpty ? '(unnamed theme)' : config.name;
     final byline = [
-      if (config.author.isNotEmpty) 'por ${config.author}',
-      if (theme.isPack) 'pack com ${theme.availableRoots.length} temas',
-      if (raw == null) 'config.json ausente/inválido — defaults do firmware',
+      if (config.author.isNotEmpty) 'by ${config.author}',
+      if (theme.isPack) 'pack with ${theme.availableRoots.length} themes',
+      if (raw == null) 'config.json missing/invalid — firmware defaults',
     ].join(' · ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,15 +183,15 @@ class ThemeInspector extends StatelessWidget {
   // "aplicar ícones" is on.
 
   String _iconPackSummary(ThemeRenderContext ctx) {
-    if (!ctx.themeHasIconPack) return 'o tema não traz icons/';
-    if (!ctx.appliedThemeIcons) return 'tema traz icons/, não aplicado';
+    if (!ctx.themeHasIconPack) return 'theme ships no icons/';
+    if (!ctx.appliedThemeIcons) return 'theme ships icons/, not applied';
     final fromTheme = ctx.packIconSources.values.where((s) => s == IconPackSource.theme).length;
-    return '$fromTheme do tema';
+    return '$fromTheme from the theme';
   }
 
   Widget _iconPackList(ThemeRenderContext ctx) {
     final sources = ctx.packIconSources;
-    if (sources.isEmpty) return const Text('(nenhum)', style: TextStyle(color: _Palette.dim));
+    if (sources.isEmpty) return const Text('(none)', style: TextStyle(color: _Palette.dim));
     final names = sources.keys.toList()..sort();
     return Wrap(
       spacing: 6,
@@ -222,7 +222,7 @@ class ThemeInspector extends StatelessWidget {
   }
 
   Widget _assetList(Set<ThemeAsset> assets, Color color) {
-    if (assets.isEmpty) return const Text('(nenhum)', style: TextStyle(color: _Palette.dim));
+    if (assets.isEmpty) return const Text('(none)', style: TextStyle(color: _Palette.dim));
     final names = assets.map((a) => a.logicalName).toList()..sort();
     return Wrap(
       spacing: 6,
@@ -234,7 +234,7 @@ class ThemeInspector extends StatelessWidget {
   Widget _fontTable(ThemeRenderContext ctx) {
     final families = ctx.fontFamiliesByPath;
     final failed = ctx.fontsFailed;
-    if (families.isEmpty) return const Text('(nenhuma)', style: TextStyle(color: _Palette.dim));
+    if (families.isEmpty) return const Text('(none)', style: TextStyle(color: _Palette.dim));
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -309,7 +309,7 @@ class _ConfigRow {
               borderRadius: BorderRadius.circular(3),
             ),
             child: Text(
-              fromTheme ? 'tema' : 'default',
+              fromTheme ? 'theme' : 'default',
               style: TextStyle(fontSize: 10, color: fromTheme ? _Palette.good : _Palette.dim),
             ),
           ),
