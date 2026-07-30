@@ -104,6 +104,23 @@ class OnionPreviewController extends ChangeNotifier {
     }
   }
 
+  /// Swaps in an already-resolved [context] without re-running resolution
+  /// — the live-edit path for editors, paired with
+  /// [ThemeRenderContext.copyWith].
+  ///
+  /// Pass [theme] too when the underlying files changed, so [theme] stays
+  /// consistent with what's on screen (sounds are *not* restarted: this is
+  /// meant for per-keystroke updates). Any [loadTheme] in flight is
+  /// cancelled, so a late-arriving resolution can't clobber the edit.
+  void applyRenderContext(ThemeRenderContext context, {OnionThemeBundle? theme}) {
+    _themeLoadToken++;
+    _themeLoading = false;
+    _themeLoadError = null;
+    if (theme != null) _theme = theme;
+    _renderContext = context;
+    notifyListeners();
+  }
+
   // --- Icon pack ---
   //
   // A theme zip may ship an `icons/` pack (68 of the ~250 community

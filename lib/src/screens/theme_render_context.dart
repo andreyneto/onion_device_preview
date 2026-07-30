@@ -82,6 +82,43 @@ class ThemeRenderContext {
   /// the Flutter font family actually used for it.
   Map<String, String> get fontFamiliesByPath => Map.unmodifiable(_fontFamilies);
 
+  /// Every asset resolved into this context, with the image each one
+  /// landed on (`null` where nothing was found).
+  Map<ThemeAsset, ui.Image?> get imagesByAsset => Map.unmodifiable(_images);
+
+  /// A copy of this context with individual pieces swapped — the live-edit
+  /// path for editors: rasterize the asset you just changed, hand the
+  /// resulting [ui.Image] over in [imageOverrides], and repaint without
+  /// re-resolving (and re-decoding) the whole skin.
+  ///
+  /// [imageOverrides] is merged over the current images, so assets you
+  /// don't mention keep whatever they resolved to. Every other field
+  /// (including the resolution report) is carried over untouched — a
+  /// context patched this way still reports where its *originally
+  /// resolved* assets came from.
+  ThemeRenderContext copyWith({
+    OnionThemeConfig? config,
+    Map<ThemeAsset, ui.Image?>? imageOverrides,
+    Map<String, String>? fontFamilies,
+  }) {
+    return ThemeRenderContext(
+      config: config ?? this.config,
+      images: imageOverrides == null || imageOverrides.isEmpty
+          ? _images
+          : (Map<ThemeAsset, ui.Image?>.from(_images)..addAll(imageOverrides)),
+      fontFamilies: fontFamilies ?? _fontFamilies,
+      packIcons: _packIcons,
+      selectedPackIcons: _selectedPackIcons,
+      packIconSources: packIconSources,
+      assetsFoundInTheme: assetsFoundInTheme,
+      assetsFromDefaultSkin: assetsFromDefaultSkin,
+      assetsMissing: assetsMissing,
+      fontsFailed: fontsFailed,
+      themeHasIconPack: themeHasIconPack,
+      appliedThemeIcons: appliedThemeIcons,
+    );
+  }
+
   /// Resolves every asset in [assets] (defaults to all of [ThemeAsset]),
   /// every icon-pack icon the mock references, and every distinct font
   /// path the config uses, against [bundle]. Callers rendering a single

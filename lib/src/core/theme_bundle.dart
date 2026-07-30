@@ -150,6 +150,101 @@ class OnionThemeBundle {
     );
   }
 
+  /// Builds a bundle straight from an in-memory file map, skipping the zip
+  /// round-trip — for editors that hold a theme's files as bytes and need
+  /// to re-render after every change.
+  ///
+  /// Keys are paths relative to the zip root, exactly as
+  /// [OnionThemeBundle.fromZipBytes] would have stored them (e.g.
+  /// `'Blueprint by Aemiii91/skin/bg-title.png'`, or `'skin/bg-title.png'`
+  /// for a theme at the root). Root detection, junk filtering and path
+  /// normalization behave identically.
+  ///
+  /// [activeRootPath] picks one of the detected roots; when omitted (or
+  /// unknown) the first one wins, matching [fromZipBytes].
+  ///
+  /// Throws [InvalidThemeZipException] if no theme root is found.
+  factory OnionThemeBundle.fromFiles(
+    Map<String, Uint8List> files, {
+    String? activeRootPath,
+  }) {
+    final normalized = <String, Uint8List>{};
+    for (final entry in files.entries) {
+      final name = _normalizePath(entry.key);
+      if (name.isEmpty || _isJunkPath(name)) continue;
+      normalized[name] = entry.value;
+    }
+
+    final roots = _findThemeRoots(normalized);
+    if (roots.isEmpty) {
+      throw const InvalidThemeZipException(
+        'No theme found in the given files (expected a config.json next to a '
+        'skin/ folder, either at the root or one directory level down).',
+      );
+    }
+
+    final active = roots.firstWhere(
+      (r) => r.path == activeRootPath,
+      orElse: () => roots.first,
+    );
+    return OnionThemeBundle._(
+      config: active.config,
+      availableRoots: roots,
+      files: normalized,
+      activeRootPath: active.path,
+    );
+  }
+
+  /// Returns a copy of this bundle with [patch] applied on top of its
+  /// files — the incremental counterpart of [OnionThemeBundle.fromFiles].
+  ///
+  /// Keys are relative to the active root, like [operator []]; a `null`
+  /// value deletes the file. Roots are re-detected (so editing a
+  /// `config.json` or adding the first `skin/` file takes effect), and the
+  /// active root is kept when it survives.
+  ///
+  /// Throws [InvalidThemeZipException] if the patch leaves no theme root.
+  OnionThemeBundle withFiles(Map<String, Uint8List?> patch) {
+    if (patch.isEmpty) return this;
+    final files = Map<String, Uint8List>.from(_files);
+    for (final entry in patch.entries) {
+      final key = _resolveKey(entry.key);
+      if (entry.value == null) {
+        files.remove(key);
+      } else {
+        files[key] = entry.value!;
+      }
+    }
+    return OnionThemeBundle.fromFiles(files, activeRootPath: _activeRootPath);
+  }
+
+  /// Every file in the bundle, keyed by its path relative to the zip root
+  /// (across *all* roots, not just the active one) — what you'd write back
+  /// out to a zip or a directory.
+  Map<String, Uint8List> get allFiles => Map.unmodifiable(_files);
+
+  /// Paths of the active root's files, relative to that root (e.g.
+  /// `'skin/bg-title.png'`), optionally restricted to those under
+  /// [underRelativePrefix]. Sorted, so listings are stable.
+  List<String> listFiles({String? underRelativePrefix}) {
+    final root = _activeRootPath;
+    final prefix = underRelativePrefix ?? '';
+    final result = <String>[];
+    for (final path in _files.keys) {
+      if (!path.startsWith(root)) continue;
+      final relative = path.substring(root.length);
+      if (relative.isEmpty || !relative.startsWith(prefix)) continue;
+      result.add(relative);
+    }
+    result.sort();
+    return result;
+  }
+
+  String _resolveKey(String relativePath) {
+    final name = _normalizePath(relativePath);
+    return _activeRootPath.isEmpty ? name : '$_activeRootPath$name';
+  }
+
   /// Returns a copy of this bundle scoped to a different root from
   /// [availableRoots] (identified by its [ThemeRootInfo.path]), without
   /// re-extracting the zip.
