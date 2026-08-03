@@ -100,7 +100,10 @@ void main() {
       expect(bundle.config.name, 'Test');
 
       final patched = bundle.withFiles({
-        'config.json': _bytes(jsonEncode({'name': 'Renamed', 'title': {'size': 42}})),
+        'config.json': _bytes(jsonEncode({
+          'name': 'Renamed',
+          'title': {'size': 42}
+        })),
       });
 
       expect(patched.config.name, 'Renamed');
@@ -114,7 +117,9 @@ void main() {
         activeRootPath: 'B/',
       );
 
-      final patched = bundle.withFiles({'skin/bg-title.png': Uint8List.fromList([1])});
+      final patched = bundle.withFiles({
+        'skin/bg-title.png': Uint8List.fromList([1])
+      });
 
       expect(patched.activeRootPath, 'B/');
       expect(patched.config.name, 'B');
@@ -198,7 +203,10 @@ void main() {
       );
 
       final patched = base.copyWith(
-        config: OnionThemeConfig.fromJson(const {'name': 'Edited', 'title': {'size': 12}}),
+        config: OnionThemeConfig.fromJson(const {
+          'name': 'Edited',
+          'title': {'size': 12}
+        }),
       );
 
       expect(patched.config.name, 'Edited');
@@ -269,15 +277,78 @@ void main() {
   group('bundle equality of edits', () {
     test('withFiles round-trips through fromFiles byte-for-byte', () {
       final bundle = OnionThemeBundle.fromFiles(_themeFiles(root: 'T/'));
-      final edited = bundle.withFiles({'skin/bg-title.png': Uint8List.fromList([42])});
+      final edited = bundle.withFiles({
+        'skin/bg-title.png': Uint8List.fromList([42])
+      });
 
       final reloaded = OnionThemeBundle.fromFiles(edited.allFiles, activeRootPath: 'T/');
 
       expect(reloaded.allFiles.length, edited.allFiles.length);
       for (final entry in edited.allFiles.entries) {
-        expect(listEquals(reloaded.allFiles[entry.key], entry.value), isTrue,
-            reason: entry.key);
+        expect(listEquals(reloaded.allFiles[entry.key], entry.value), isTrue, reason: entry.key);
       }
+    });
+  });
+
+  group('allowAssetlessRoot', () {
+    Map<String, Uint8List> configOnly({String root = ''}) => {
+          '${root}config.json': _bytes(jsonEncode({'name': 'Novo', 'author': 'Eu'})),
+        };
+
+    test('a config.json alone is not a theme by default', () {
+      // Scanning someone else's zip, a stray config.json in an unrelated
+      // directory must not register as a theme.
+      expect(
+        () => OnionThemeBundle.fromFiles(configOnly()),
+        throwsA(isA<InvalidThemeZipException>()),
+      );
+    });
+
+    test('opted in, a config.json alone is a theme', () {
+      // Every asset in the format is optional: a theme that overrides
+      // nothing but its config renders as the factory theme, and that is a
+      // legitimate starting point for authoring.
+      final bundle = OnionThemeBundle.fromFiles(configOnly(), allowAssetlessRoot: true);
+
+      expect(bundle.config.name, 'Novo');
+      expect(bundle.activeRootPath, '');
+      expect(bundle.isPack, isFalse);
+      expect(bundle.listFiles(), ['config.json']);
+    });
+
+    test('editing the config of an assetless theme keeps it a theme', () {
+      // The reason the flag has to survive: withFiles re-detects roots, so
+      // without carrying the flag the first config edit would throw and an
+      // empty theme could never be edited at all.
+      final bundle = OnionThemeBundle.fromFiles(configOnly(), allowAssetlessRoot: true);
+
+      final edited = bundle.withFiles({
+        'config.json': _bytes(jsonEncode({'name': 'Renomeado', 'author': 'Eu'})),
+      });
+
+      expect(edited.config.name, 'Renomeado');
+    });
+
+    test('the first asset makes it a theme by the strict rule too', () {
+      final bundle = OnionThemeBundle.fromFiles(configOnly(), allowAssetlessRoot: true).withFiles({
+        'skin/bg-title.png': Uint8List.fromList([1, 2, 3])
+      });
+
+      expect(
+        OnionThemeBundle.fromFiles(bundle.allFiles).config.name,
+        'Novo',
+        reason: 'once it has a skin/ file, no opt-in should be needed',
+      );
+    });
+
+    test('opted in, roots without skin/ are found one level down too', () {
+      final bundle = OnionThemeBundle.fromFiles(
+        {...configOnly(root: 'Claro/'), ...configOnly(root: 'Escuro/')},
+        allowAssetlessRoot: true,
+      );
+
+      expect(bundle.isPack, isTrue);
+      expect(bundle.availableRoots.map((r) => r.path), ['Claro/', 'Escuro/']);
     });
   });
 }

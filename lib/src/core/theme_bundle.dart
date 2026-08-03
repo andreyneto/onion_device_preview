@@ -79,13 +79,20 @@ class OnionThemeBundle {
     required this.availableRoots,
     required Map<String, Uint8List> files,
     required String activeRootPath,
+    bool allowAssetlessRoot = false,
   })  : _files = files,
-        _activeRootPath = activeRootPath;
+        _activeRootPath = activeRootPath,
+        _allowAssetlessRoot = allowAssetlessRoot;
 
   final OnionThemeConfig config;
   final List<ThemeRootInfo> availableRoots;
   final Map<String, Uint8List> _files;
   final String _activeRootPath;
+
+  /// Whether this bundle's roots may consist of a `config.json` alone.
+  /// Carried along by [withFiles] so an in-progress theme doesn't stop
+  /// being a theme the moment its config is edited.
+  final bool _allowAssetlessRoot;
 
   /// Whether the zip contained more than one theme (a "theme pack").
   bool get isPack => availableRoots.length > 1;
@@ -163,10 +170,19 @@ class OnionThemeBundle {
   /// [activeRootPath] picks one of the detected roots; when omitted (or
   /// unknown) the first one wins, matching [fromZipBytes].
   ///
+  /// [allowAssetlessRoot] accepts a directory holding a `config.json` with
+  /// no `skin/` next to it. That is a legitimate theme — every asset in the
+  /// format is optional, and the firmware falls back to the factory theme
+  /// for whatever is missing — but it is off by default: when scanning
+  /// someone else's zip, a stray `config.json` in an unrelated directory
+  /// would otherwise register as a theme. Turn it on when *authoring*, so
+  /// a theme that starts empty stays valid until its first asset exists.
+  ///
   /// Throws [InvalidThemeZipException] if no theme root is found.
   factory OnionThemeBundle.fromFiles(
     Map<String, Uint8List> files, {
     String? activeRootPath,
+    bool allowAssetlessRoot = false,
   }) {
     final normalized = <String, Uint8List>{};
     for (final entry in files.entries) {
@@ -175,11 +191,12 @@ class OnionThemeBundle {
       normalized[name] = entry.value;
     }
 
-    final roots = _findThemeRoots(normalized);
+    final roots = _findThemeRoots(normalized, allowAssetlessRoot: allowAssetlessRoot);
     if (roots.isEmpty) {
-      throw const InvalidThemeZipException(
-        'No theme found in the given files (expected a config.json next to a '
-        'skin/ folder, either at the root or one directory level down).',
+      throw InvalidThemeZipException(
+        'No theme found in the given files (expected a config.json '
+        '${allowAssetlessRoot ? '' : 'next to a skin/ folder, '}'
+        'either at the root or one directory level down).',
       );
     }
 
@@ -192,6 +209,7 @@ class OnionThemeBundle {
       availableRoots: roots,
       files: normalized,
       activeRootPath: active.path,
+      allowAssetlessRoot: allowAssetlessRoot,
     );
   }
 
@@ -215,7 +233,11 @@ class OnionThemeBundle {
         files[key] = entry.value!;
       }
     }
-    return OnionThemeBundle.fromFiles(files, activeRootPath: _activeRootPath);
+    return OnionThemeBundle.fromFiles(
+      files,
+      activeRootPath: _activeRootPath,
+      allowAssetlessRoot: _allowAssetlessRoot,
+    );
   }
 
   /// Every file in the bundle, keyed by its path relative to the zip root
@@ -258,6 +280,7 @@ class OnionThemeBundle {
       availableRoots: availableRoots,
       files: _files,
       activeRootPath: root.path,
+      allowAssetlessRoot: _allowAssetlessRoot,
     );
   }
 
@@ -275,7 +298,10 @@ class OnionThemeBundle {
     return _files.keys.any((path) => path.startsWith(prefix));
   }
 
-  static List<ThemeRootInfo> _findThemeRoots(Map<String, Uint8List> files) {
+  static List<ThemeRootInfo> _findThemeRoots(
+    Map<String, Uint8List> files, {
+    bool allowAssetlessRoot = false,
+  }) {
     final candidates = <String>{''};
     for (final path in files.keys) {
       final slash = path.indexOf('/');
@@ -286,8 +312,11 @@ class OnionThemeBundle {
     for (final candidate in candidates) {
       if (_isJunkPath(candidate)) continue;
       final configPath = '${candidate}config.json';
-      final hasSkin = files.keys.any((p) => p.startsWith('${candidate}skin/'));
-      if (!hasSkin || !files.containsKey(configPath)) continue;
+      if (!files.containsKey(configPath)) continue;
+      if (!allowAssetlessRoot &&
+          !files.keys.any((p) => p.startsWith('${candidate}skin/'))) {
+        continue;
+      }
       final rawJson = _decodeConfigAt(files, configPath);
       roots.add(ThemeRootInfo(
         path: candidate,
